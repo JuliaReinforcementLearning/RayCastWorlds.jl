@@ -3,6 +3,9 @@ uuid = "a48166eb-4254-4927-9a4f-eb5d9658c5fa"
 authors = ["Sid-Bhatia-0 <sidb60200@gmail.com> and contributors"]
 version = "0.0.1"
 
+[deps]
+MiniFB = "cc649173-1898-4bb8-8a16-ca5f88bd87d9"
+
 [compat]
 julia = "1"
 
