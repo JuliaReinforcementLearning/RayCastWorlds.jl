@@ -1,0 +1,13 @@
+name = "RayCaster"
+uuid = "a48166eb-4254-4927-9a4f-eb5d9658c5fa"
+authors = ["Sid-Bhatia-0 <sidb60200@gmail.com> and contributors"]
+version = "0.0.1"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
