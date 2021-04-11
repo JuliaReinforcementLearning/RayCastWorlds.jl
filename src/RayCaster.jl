@@ -28,5 +28,6 @@ function test_mfb()
 end
 
 include("world.jl")
+include("render.jl")
 
 end
