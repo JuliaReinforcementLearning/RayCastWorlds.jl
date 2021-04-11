@@ -1,6 +1,7 @@
 module RayCaster
 
 import MiniFB as MFB
+import GridWorlds as GW
 
 function test_mfb()
     height = 256
@@ -25,5 +26,7 @@ function test_mfb()
 
     MFB.mfb_close(window)
 end
+
+include("world.jl")
 
 end
