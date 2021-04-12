@@ -6,6 +6,7 @@ version = "0.0.1"
 [deps]
 GridWorlds = "e15a9946-cd7f-4d03-83e2-6c30bacb0043"
 MiniFB = "cc649173-1898-4bb8-8a16-ca5f88bd87d9"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 julia = "1"
