@@ -54,6 +54,9 @@ tile_map_to_frame(i_tile_map, j_tile_map, height_tile_frame, width_tile_frame) =
 frame_to_tile_map(i_frame, height_tile_frame) = (i_frame - 1) ÷ height_tile_frame + 1
 frame_to_tile_map(i_frame, j_frame, height_tile_frame, width_tile_frame) = (frame_to_tile_map(i_frame, height_tile_frame), frame_to_tile_map(j_frame, width_tile_frame))
 
+world_to_frame(distance_world, pixels_per_unit_world) = floor(Int, pixels_per_unit_world * distance_world)
+world_to_frame(x, y, height_world, width_world, pixels_per_unit_world) = (world_to_frame(height_world - y, pixels_per_unit_world), world_to_frame(width_world - x, pixels_per_unit_world))
+
 function draw_tile_map!(buffer, tile_map, height_tile, width_tile)
     height_tile_map = GW.get_height(tile_map)
     width_tile_map = GW.get_width(tile_map)
