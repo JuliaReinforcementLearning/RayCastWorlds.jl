@@ -15,16 +15,7 @@ function render_world(world, height_frame, width_frame)
     MFB.mfb_set_keyboard_callback(window, show_key)
 
     while MFB.mfb_wait_sync(window)
-        for i in 1:height_tile_map
-            for j in 1:width_tile_map
-                if tile_map[GW.WALL, i, j]
-                    wall_start_height_frame, wall_start_width_frame = tile_map_to_frame(i, j, height_tile, width_tile)
-                    wall_stop_height_frame = wall_start_height_frame + height_tile - 1
-                    wall_stop_width_frame = wall_start_width_frame + width_tile - 1
-                    buffer[wall_start_height_frame:wall_stop_height_frame, wall_start_width_frame:wall_stop_width_frame] .= MFB.mfb_rgb(255, 255, 255)
-                end
-            end
-        end
+        draw_tile_map!(buffer, tile_map, height_tile, width_tile)
 
         agent_radius_frame = floor(Int, width_frame * world.agent.radius / width_world)
         agent_pos_frame = CartesianIndex(floor(Int, height_frame * world.agent.position[2] / height_world), floor(Int, width_frame * world.agent.position[1] / width_world))
@@ -66,3 +57,19 @@ end
 
 tile_map_to_frame(i_tile_map, j_tile_map, height_tile, width_tile) = ((i_tile_map - 1) * height_tile + 1, (j_tile_map - 1) * width_tile + 1)
 frame_to_tile_map(i_frame, j_frame, height_tile, width_tile) = ((i_frame - 1) ÷ height_tile + 1, (j_frame - 1) ÷ width_tile + 1)
+
+function draw_tile_map!(buffer, tile_map, height_tile, width_tile)
+    height_tile_map = GW.get_height(tile_map)
+    width_tile_map = GW.get_width(tile_map)
+
+    for i in 1:height_tile_map
+        for j in 1:width_tile_map
+            if tile_map[GW.WALL, i, j]
+                wall_start_height_frame, wall_start_width_frame = tile_map_to_frame(i, j, height_tile, width_tile)
+                wall_stop_height_frame = wall_start_height_frame + height_tile - 1
+                wall_stop_width_frame = wall_start_width_frame + width_tile - 1
+                buffer[wall_start_height_frame:wall_stop_height_frame, wall_start_width_frame:wall_stop_width_frame] .= MFB.mfb_rgb(255, 255, 255)
+            end
+        end
+    end
+end
