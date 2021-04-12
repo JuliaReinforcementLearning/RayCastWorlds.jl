@@ -9,6 +9,8 @@ function render_env(env, frame_height, frame_width)
     buffer = PermutedDimsArray(row_indexed_buffer, (2, 1))
     window = MFB.mfb_open_ex("Test", frame_width, frame_height, MFB.WF_RESIZABLE);
 
+    MFB.mfb_set_keyboard_callback(window, show_key)
+
     while MFB.mfb_wait_sync(window)
         for i in 1:world_height
             for j in 1:world_width
@@ -42,4 +44,20 @@ function render_env(env, frame_height, frame_width)
     end
 
     MFB.mfb_close(window)
+end
+
+function show_key(window, key, mod, isPressed)::Cvoid
+    if isPressed
+        if key == MFB.KB_KEY_UP
+            display(key)
+        elseif key == MFB.KB_KEY_DOWN
+            display(key)
+        elseif key == MFB.KB_KEY_LEFT
+            display(key)
+        elseif key == MFB.KB_KEY_RIGHT
+            display(key)
+        elseif key == MFB.KB_KEY_ESCAPE
+            MFB.mfb_close(window)
+        end
+    end
 end
