@@ -20,7 +20,7 @@ function render_world(world, height_frame, width_frame)
 
     while MFB.mfb_wait_sync(window)
 
-        draw_agent!(buffer, agent, height_world, width_world, height_tile, width_tile, pixels_per_unit_world)
+        draw_agent!(buffer, agent, height_world, width_world, pixels_per_unit_world)
 
         state = MFB.mfb_update(window, buffer)
 
@@ -67,7 +67,7 @@ function draw_tile_map!(buffer, tile_map, height_tile, width_tile)
     end
 end
 
-function draw_agent!(buffer, agent, height_world, width_world, height_tile, width_tile, pixels_per_unit_world)
+function draw_agent!(buffer, agent, height_world, width_world, pixels_per_unit_world)
     agent_radius_frame = floor(Int, pixels_per_unit_world * agent.radius)
     agent_pos_frame = CartesianIndex(floor(Int, pixels_per_unit_world * (height_world - agent.position[2])), floor(Int, pixels_per_unit_world * (width_world - agent.position[1])))
     agent_start_height_frame = agent_pos_frame[1] - agent_radius_frame + 1
