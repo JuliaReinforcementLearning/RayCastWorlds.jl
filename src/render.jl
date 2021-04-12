@@ -48,8 +48,11 @@ function show_key(window, key, mod, isPressed)::Cvoid
     end
 end
 
-tile_map_to_frame(i_tile_map, j_tile_map, height_tile, width_tile) = ((i_tile_map - 1) * height_tile + 1, (j_tile_map - 1) * width_tile + 1)
-frame_to_tile_map(i_frame, j_frame, height_tile, width_tile) = ((i_frame - 1) ÷ height_tile + 1, (j_frame - 1) ÷ width_tile + 1)
+tile_map_to_frame(i_tile_map, height_tile_frame) = (i_tile_map - 1) * height_tile_frame + 1
+tile_map_to_frame(i_tile_map, j_tile_map, height_tile_frame, width_tile_frame) = (tile_map_to_frame(i_tile_map, height_tile_frame), tile_map_to_frame(j_tile_map, width_tile_frame))
+
+frame_to_tile_map(i_frame, height_tile_frame) = (i_frame - 1) ÷ height_tile_frame + 1
+frame_to_tile_map(i_frame, j_frame, height_tile_frame, width_tile_frame) = (frame_to_tile_map(i_frame, height_tile_frame), frame_to_tile_map(j_frame, width_tile_frame))
 
 function draw_tile_map!(buffer, tile_map, height_tile, width_tile)
     height_tile_map = GW.get_height(tile_map)
