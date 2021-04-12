@@ -17,10 +17,12 @@ function render_world(world, height_frame, width_frame)
     MFB.mfb_set_keyboard_callback(window, show_key)
 
     draw_tile_map!(buffer, tile_map, height_tile, width_tile)
+    agent_radius_frame = world_to_frame(agent.radius, pixels_per_unit_world)
 
     while MFB.mfb_wait_sync(window)
 
-        draw_agent!(buffer, agent, height_world, width_world, pixels_per_unit_world)
+        agent_origin_frame = get_agent_origin_frame(agent, height_world, width_world, pixels_per_unit_world)
+        draw_agent!(buffer, agent_origin_frame..., agent_radius_frame)
 
         state = MFB.mfb_update(window, buffer)
 
@@ -57,6 +59,12 @@ frame_to_tile_map(i_frame, j_frame, height_tile_frame, width_tile_frame) = (fram
 world_to_frame(distance_world, pixels_per_unit_world) = floor(Int, pixels_per_unit_world * distance_world)
 world_to_frame(x, y, height_world, width_world, pixels_per_unit_world) = (world_to_frame(height_world - y, pixels_per_unit_world), world_to_frame(width_world - x, pixels_per_unit_world))
 
+function get_agent_origin_frame(agent, height_world, width_world, pixels_per_unit_world)
+    radius_frame = world_to_frame(agent.radius, pixels_per_unit_world)
+    i_frame, j_frame = world_to_frame(agent.position..., height_world, width_world, pixels_per_unit_world)
+    return (i_frame - radius_frame + 1, j_frame - radius_frame + 1)
+end
+
 function draw_tile_map!(buffer, tile_map, height_tile, width_tile)
     height_tile_map = GW.get_height(tile_map)
     width_tile_map = GW.get_width(tile_map)
@@ -73,20 +81,15 @@ function draw_tile_map!(buffer, tile_map, height_tile, width_tile)
     end
 end
 
-function draw_agent!(buffer, agent, height_world, width_world, pixels_per_unit_world)
-    agent_radius_frame = floor(Int, pixels_per_unit_world * agent.radius)
-    agent_pos_frame = CartesianIndex(floor(Int, pixels_per_unit_world * (height_world - agent.position[2])), floor(Int, pixels_per_unit_world * (width_world - agent.position[1])))
-    agent_start_height_frame = agent_pos_frame[1] - agent_radius_frame + 1
-    agent_stop_height_frame = agent_pos_frame[1] + agent_radius_frame - 1
-    agent_start_width_frame = agent_pos_frame[2] - agent_radius_frame + 1
-    agent_stop_width_frame = agent_pos_frame[2] + agent_radius_frame - 1
-    for i in agent_start_height_frame:agent_stop_height_frame
-        for j in agent_start_width_frame:agent_stop_width_frame
-            if (i - agent_pos_frame[1]) ^ 2 + (j - agent_pos_frame[2]) ^ 2 <= agent_radius_frame ^ 2
-                buffer[i, j] = MFB.mfb_rgb(127, 127, 127)
-            else
-                buffer[i, j] = MFB.mfb_rgb(0, 0, 0)
-            end
-        end
+function draw_agent!(buffer, start_i, start_j, radius)
+    distance = 2 * radius - 1
+    center_i = start_i + radius - 1
+    center_j = start_j + radius - 1
+
+    map(CartesianIndices((start_i : start_i + distance - 1, start_j : start_j + distance - 1))) do pos
+        color = (pos[1] - center_i) ^ 2 + (pos[2] - center_j) ^ 2 <= radius ^ 2 ? MFB.mfb_rgb(127, 127, 127) : MFB.mfb_rgb(0, 0, 0)
+        buffer[pos] = color
     end
+
+    return nothing
 end
