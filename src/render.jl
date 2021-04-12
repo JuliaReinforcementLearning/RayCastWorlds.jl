@@ -16,8 +16,9 @@ function render_world(world, height_frame, width_frame)
     window = MFB.mfb_open_ex("Test", width_frame, height_frame, MFB.WF_RESIZABLE);
     MFB.mfb_set_keyboard_callback(window, show_key)
 
+    draw_tile_map!(buffer, tile_map, height_tile, width_tile)
+
     while MFB.mfb_wait_sync(window)
-        draw_tile_map!(buffer, tile_map, height_tile, width_tile)
 
         draw_agent!(buffer, agent, height_world, width_world, height_tile, width_tile, pixels_per_unit_world)
 
