@@ -32,6 +32,8 @@ function render_world(world, height_frame, width_frame)
     end
 
     MFB.mfb_close(window)
+
+    return nothing
 end
 
 function show_key(window, key, mod, isPressed)::Cvoid
@@ -48,6 +50,8 @@ function show_key(window, key, mod, isPressed)::Cvoid
             MFB.mfb_close(window)
         end
     end
+
+    return nothing
 end
 
 tile_map_to_frame(i_tile_map, height_tile_frame) = (i_tile_map - 1) * height_tile_frame + 1
@@ -79,6 +83,8 @@ function draw_tile_map!(buffer, tile_map, height_tile, width_tile)
             end
         end
     end
+
+    return nothing
 end
 
 function draw_agent!(buffer, start_i, start_j, radius)
