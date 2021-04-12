@@ -28,7 +28,7 @@ function render_world(world, height_frame, width_frame)
         end
 
         agent_radius_frame = floor(Int, width_frame * world.agent.radius / width_world)
-        agent_pos_frame = CartesianIndex(floor(Int, width_frame * world.agent.position[1] / width_world), floor(Int, height_frame * world.agent.position[2] / height_world))
+        agent_pos_frame = CartesianIndex(floor(Int, height_frame * world.agent.position[2] / height_world), floor(Int, width_frame * world.agent.position[1] / width_world))
         for i in agent_pos_frame[1] - agent_radius_frame + 1 : agent_pos_frame[1] + agent_radius_frame - 1
             for j in agent_pos_frame[2] - agent_radius_frame + 1 : agent_pos_frame[2] + agent_radius_frame - 1
                 if (i-agent_pos_frame[1])^2 + (j-agent_pos_frame[2])^2 <= agent_radius_frame^2
