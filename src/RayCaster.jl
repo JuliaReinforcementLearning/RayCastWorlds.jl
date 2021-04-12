@@ -1,7 +1,8 @@
 module RayCaster
 
-import MiniFB as MFB
 import GridWorlds as GW
+import MiniFB as MFB
+import StaticArrays as SA
 
 include("world.jl")
 include("render.jl")
