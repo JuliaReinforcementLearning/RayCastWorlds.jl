@@ -87,8 +87,10 @@ function draw_agent!(buffer, start_i, start_j, radius)
     center_j = start_j + radius - 1
 
     map(CartesianIndices((start_i : start_i + distance - 1, start_j : start_j + distance - 1))) do pos
-        color = (pos[1] - center_i) ^ 2 + (pos[2] - center_j) ^ 2 <= radius ^ 2 ? MFB.mfb_rgb(127, 127, 127) : MFB.mfb_rgb(0, 0, 0)
-        buffer[pos] = color
+        if (pos[1] - center_i) ^ 2 + (pos[2] - center_j) ^ 2 <= radius ^ 2
+            buffer[pos] = MFB.mfb_rgb(127, 127, 127)
+        end
+        return nothing
     end
 
     return nothing
