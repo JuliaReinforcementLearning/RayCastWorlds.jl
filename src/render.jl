@@ -1,34 +1,37 @@
-function render_env(env, frame_height, frame_width)
-    world_height = GW.get_height(env.world)
-    world_width = GW.get_width(env.world)
+function render_world(world, height_frame, width_frame)
+    height_world = world.height
+    width_world = world.width
 
-    tile_height = frame_height ÷ world_height
-    tile_width = frame_width ÷ world_width
+    tile_map = world.tile_map
+    height_tile_map = GW.get_height(tile_map)
+    width_tile_map = GW.get_width(tile_map)
 
-    row_indexed_buffer = zeros(UInt32, frame_width, frame_height)
+    height_tile = height_frame ÷ height_tile_map
+    width_tile = width_frame ÷ width_tile_map
+
+    row_indexed_buffer = zeros(UInt32, width_frame, height_frame)
     buffer = PermutedDimsArray(row_indexed_buffer, (2, 1))
-    window = MFB.mfb_open_ex("Test", frame_width, frame_height, MFB.WF_RESIZABLE);
-
+    window = MFB.mfb_open_ex("Test", width_frame, height_frame, MFB.WF_RESIZABLE);
     MFB.mfb_set_keyboard_callback(window, show_key)
 
     while MFB.mfb_wait_sync(window)
-        for i in 1:world_height
-            for j in 1:world_width
-                if env.world[GW.WALL, i, j]
-                    start_height = (i - 1) * tile_height + 1
-                    stop_height = start_height + tile_height - 1
-                    start_width = (j - 1) * tile_width + 1
-                    stop_width = start_width + tile_width - 1
-                    buffer[start_height:stop_height, start_width:stop_width] .= MFB.mfb_rgb(255, 255, 255)
+        for i in 1:height_tile_map
+            for j in 1:width_tile_map
+                if tile_map[GW.WALL, i, j]
+                    wall_start_height_frame = (i - 1) * height_tile + 1
+                    wall_stop_height_frame = wall_start_height_frame + height_tile - 1
+                    wall_start_width_frame = (j - 1) * width_tile + 1
+                    wall_stop_width_frame = wall_start_width_frame + width_tile - 1
+                    buffer[wall_start_height_frame:wall_stop_height_frame, wall_start_width_frame:wall_stop_width_frame] .= MFB.mfb_rgb(255, 255, 255)
                 end
             end
         end
 
-        agent_frame_radius = floor(Int, frame_width * env.agent.radius / env.width)
-        agent_frame_pos = CartesianIndex(floor(Int, frame_width * env.agent.position[1] / env.width), floor(Int, frame_height * env.agent.position[2] / env.height))
-        for i in agent_frame_pos[1] - agent_frame_radius + 1 : agent_frame_pos[1] + agent_frame_radius - 1
-            for j in agent_frame_pos[2] - agent_frame_radius + 1 : agent_frame_pos[2] + agent_frame_radius - 1
-                if (i-agent_frame_pos[1])^2 + (j-agent_frame_pos[2])^2 <= agent_frame_radius^2
+        agent_radius_frame = floor(Int, width_frame * world.agent.radius / width_world)
+        agent_pos_frame = CartesianIndex(floor(Int, width_frame * world.agent.position[1] / width_world), floor(Int, height_frame * world.agent.position[2] / height_world))
+        for i in agent_pos_frame[1] - agent_radius_frame + 1 : agent_pos_frame[1] + agent_radius_frame - 1
+            for j in agent_pos_frame[2] - agent_radius_frame + 1 : agent_pos_frame[2] + agent_radius_frame - 1
+                if (i-agent_pos_frame[1])^2 + (j-agent_pos_frame[2])^2 <= agent_radius_frame^2
                     buffer[i, j] = MFB.mfb_rgb(127, 127, 127)
                 else
                     buffer[i, j] = MFB.mfb_rgb(0, 0, 0)
