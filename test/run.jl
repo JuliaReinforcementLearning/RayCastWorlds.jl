@@ -141,41 +141,39 @@ function draw_agent_direction()
     draw_line(center_i, center_j, stop_i, stop_j)
 end
 
+function clear_agent()
+    center_i = get_start_pu(height_world_wu - agent.position[2])
+    center_j = get_start_pu(agent.position[1])
+    start_i = center_i - radius_pu + 1
+    start_j = center_j - radius_pu + 1
+    stop_i = start_i + d - 1
+    stop_j = start_j + d - 1
+    img[start_i:stop_i, start_j:stop_j] .= black
+
+    return nothing
+end
+
 function keyboard_callback(window, key, mod, isPressed)::Cvoid
     if isPressed
         display(key)
         println()
 
-        center_i = get_start_pu(height_world_wu - agent.position[2])
-        center_j = get_start_pu(agent.position[1])
-        start_i = center_i - radius_pu + 1
-        start_j = center_j - radius_pu + 1
-        stop_i = start_i + d - 1
-        stop_j = start_j + d - 1
+        clear_agent()
 
         if key == MFB.KB_KEY_UP
-            img[start_i:stop_i, start_j:stop_j] .= black
             agent.position = agent.position + speed_wu * agent.direction
-            draw_agent()
-            draw_agent_direction()
         elseif key == MFB.KB_KEY_DOWN
-            img[start_i:stop_i, start_j:stop_j] .= black
             agent.position = agent.position - speed_wu * agent.direction
-            draw_agent()
-            draw_agent_direction()
         elseif key == MFB.KB_KEY_LEFT
-            img[start_i:stop_i, start_j:stop_j] .= black
-            draw_agent()
             agent.direction = RC.rotate(agent.direction, direction_increment)
-            draw_agent_direction()
         elseif key == MFB.KB_KEY_RIGHT
-            img[start_i:stop_i, start_j:stop_j] .= black
-            draw_agent()
             agent.direction = RC.rotate(agent.direction, direction_decrement)
-            draw_agent_direction()
         elseif key == MFB.KB_KEY_ESCAPE
             MFB.mfb_close(window)
         end
+
+        draw_agent()
+        draw_agent_direction()
     end
 
     return nothing
