@@ -15,7 +15,7 @@ const tm = RC.generate_tile_map(height_tm_tu, width_tm_tu)
 # agent
 
 const radius_wu = convert(T, 0.05)
-const speed_wu = convert(T, 0.01)
+const speed_wu = convert(T, 0.005)
 
 const agent = RC.Agent(SA.SVector(convert(T, 0.5), convert(T, 0.25)),
                  SA.SVector(convert(T, 1/sqrt(2)), convert(T, 1/sqrt(2))),
@@ -101,8 +101,37 @@ function draw_agent()
     return nothing
 end
 
+function keyboard_callback(window, key, mod, isPressed)::Cvoid
+    if isPressed
+        display(key)
+        println()
+
+        center_i = get_start_pu(height_world_wu - agent.position[2])
+        center_j = get_start_pu(agent.position[1])
+        start_i = center_i - radius_pu + 1
+        start_j = center_j - radius_pu + 1
+        stop_i = start_i + d - 1
+        stop_j = start_j + d - 1
+
+        if key == MFB.KB_KEY_UP
+            img[start_i:stop_i, start_j:stop_j] .= black
+            agent.position = agent.position .+ agent.speed
+            draw_agent()
+        elseif key == MFB.KB_KEY_DOWN
+            img[start_i:stop_i, start_j:stop_j] .= black
+            agent.position = agent.position .- agent.speed
+            draw_agent()
+        elseif key == MFB.KB_KEY_ESCAPE
+            MFB.mfb_close(window)
+        end
+    end
+
+    return nothing
+end
+
 function render()
     window = MFB.mfb_open("Test", width_img_pu, height_img_pu)
+    MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     draw_tile_map()
     draw_agent()
