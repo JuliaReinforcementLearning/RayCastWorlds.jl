@@ -55,7 +55,9 @@ const tu_per_wu = height_tm_tu / height_world_wu
 const pu_per_tu = height_img_pu ÷ height_tm_tu
 
 wu_to_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu) + 1
+wu_to_pu((x_wu, y_wu)) = (wu_to_pu(height_world_wu - y_wu), wu_to_pu(x_wu))
 wu_to_tu(x_wu::AbstractFloat) = floor(Int, x_wu * tu_per_wu) + 1
+wu_to_tu((x_wu, y_wu)) = (wu_to_tu(height_world_wu - y_wu), wu_to_tu(x_wu))
 pu_to_tu(i_pu::Integer) = (i_pu - 1) ÷ pu_per_tu + 1
 
 # tile map region
@@ -76,7 +78,7 @@ end
 
 const radius_pu = wu_to_pu(radius_wu)
 
-get_agent_center_pu() = (wu_to_pu(height_world_wu - agent.position[2]), wu_to_pu(agent.position[1]))
+get_agent_center_pu() = wu_to_pu(agent.position)
 get_agent_top_left_pu(center_pu) = center_pu .- (radius_pu - 1)
 get_agent_bottom_right_pu(center_pu) = center_pu .+ (radius_pu - 1)
 function get_agent_region_pu(center_pu)
@@ -156,6 +158,11 @@ function clear_agent()
     return nothing
 end
 
+function is_agent_colliding(center_wu)
+    x_wu, y_wu = center_wu
+    return tm[GW.WALL, wu_to_tu((x_wu + radius_wu, y_wu))...] || tm[GW.WALL, wu_to_tu((x_wu, y_wu + radius_wu))...] || tm[GW.WALL, wu_to_tu((x_wu - radius_wu, y_wu))...] || tm[GW.WALL, wu_to_tu((x_wu, y_wu - radius_wu))...]
+end
+
 function keyboard_callback(window, key, mod, isPressed)::Cvoid
     if isPressed
         display(key)
@@ -164,9 +171,15 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
         clear_agent()
 
         if key == MFB.KB_KEY_UP
-            agent.position = agent.position + speed_wu * agent.direction
+            new_position = agent.position + speed_wu * agent.direction
+            if !is_agent_colliding(new_position)
+                agent.position = new_position
+            end
         elseif key == MFB.KB_KEY_DOWN
-            agent.position = agent.position - speed_wu * agent.direction
+            new_position = agent.position - speed_wu * agent.direction
+            if !is_agent_colliding(new_position)
+                agent.position = new_position
+            end
         elseif key == MFB.KB_KEY_LEFT
             agent.direction = RC.rotate(agent.direction, direction_increment)
         elseif key == MFB.KB_KEY_RIGHT
