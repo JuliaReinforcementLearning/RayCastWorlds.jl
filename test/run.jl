@@ -64,6 +64,8 @@ get_start_tu(x_wu::AbstractFloat) = floor(Int, x_wu * tu_per_wu)
 const radius_pu = get_start_pu(radius_wu)
 const d = 2 * radius_pu - 1
 
+get_agent_position_pu() = (get_start_pu(height_world_wu - agent.position[2]), get_start_pu(agent.position[1]))
+
 function draw_tile_map()
     map(CartesianIndices((1:height_tm_tu, 1:width_tm_tu))) do pos
         if tm[GW.WALL, pos]
@@ -82,8 +84,7 @@ function draw_tile_map()
 end
 
 function draw_agent()
-    center_i = get_start_pu(height_world_wu - agent.position[2])
-    center_j = get_start_pu(agent.position[1])
+    center_i, center_j = get_agent_position_pu()
     start_i = center_i - radius_pu + 1
     start_j = center_j - radius_pu + 1
     stop_i = start_i + d - 1
@@ -134,16 +135,14 @@ function draw_line(i0::Int, j0::Int, i1::Int, j1::Int)
 end
 
 function draw_agent_direction()
-    center_i = get_start_pu(height_world_wu - agent.position[2])
-    center_j = get_start_pu(agent.position[1])
+    center_i, center_j = get_agent_position_pu()
     stop_i = get_start_pu(height_world_wu - (agent.position[2] + radius_wu * agent.direction[2] / 2))
     stop_j = get_start_pu(agent.position[1] + radius_wu * agent.direction[1] / 2)
     draw_line(center_i, center_j, stop_i, stop_j)
 end
 
 function clear_agent()
-    center_i = get_start_pu(height_world_wu - agent.position[2])
-    center_j = get_start_pu(agent.position[1])
+    center_i, center_j = get_agent_position_pu()
     start_i = center_i - radius_pu + 1
     start_j = center_j - radius_pu + 1
     stop_i = start_i + d - 1
