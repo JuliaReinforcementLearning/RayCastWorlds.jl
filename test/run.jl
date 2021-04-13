@@ -48,21 +48,21 @@ const red = MFB.mfb_rgb(255, 0, 0)
 const green = MFB.mfb_rgb(0, 255, 0)
 const blue = MFB.mfb_rgb(0, 0, 255)
 
-# extras
+# units
 
 const pu_per_wu = height_img_pu / height_world_wu
 const tu_per_wu = height_tm_tu / height_world_wu
 const pu_per_tu = height_img_pu ÷ height_tm_tu
 
-# main
-
-get_tile_start_pu(i_tu::Integer) = (i_tu - 1) * pu_per_tu + 1
-
 wu_to_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu) + 1
 wu_to_tu(x_wu::AbstractFloat) = floor(Int, x_wu * tu_per_wu) + 1
 pu_to_tu(i_pu::Integer) = (i_pu - 1) ÷ pu_per_tu + 1
 
+# main
+
 const radius_pu = wu_to_pu(radius_wu)
+
+get_tile_start_pu(i_tu::Integer) = (i_tu - 1) * pu_per_tu + 1
 
 get_agent_center_i_pu() = wu_to_pu(height_world_wu - agent.position[2])
 get_agent_center_j_pu() = wu_to_pu(agent.position[1])
