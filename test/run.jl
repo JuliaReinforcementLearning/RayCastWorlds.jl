@@ -16,6 +16,9 @@ const tm = RC.generate_tile_map(height_tm_tu, width_tm_tu)
 
 const radius_wu = convert(T, 0.05)
 const speed_wu = convert(T, 0.005)
+const theta_change_unit = convert(T, pi / 60)
+const direction_increment = SA.SVector(cos(theta_change_unit), sin(theta_change_unit))
+const direction_decrement = SA.SVector(direction_increment[1], -direction_increment[2])
 
 const agent = RC.Agent(SA.SVector(convert(T, 0.5), convert(T, 0.25)),
                  SA.SVector(convert(T, 1/sqrt(2)), convert(T, 1/sqrt(2))),
@@ -154,13 +157,23 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
 
         if key == MFB.KB_KEY_UP
             img[start_i:stop_i, start_j:stop_j] .= black
-            agent.position = agent.position .+ agent.speed
+            agent.position = agent.position + agent.speed * agent.direction
             draw_agent()
             draw_agent_direction()
         elseif key == MFB.KB_KEY_DOWN
             img[start_i:stop_i, start_j:stop_j] .= black
-            agent.position = agent.position .- agent.speed
+            agent.position = agent.position - agent.speed * agent.direction
             draw_agent()
+            draw_agent_direction()
+        elseif key == MFB.KB_KEY_LEFT
+            img[start_i:stop_i, start_j:stop_j] .= black
+            draw_agent()
+            agent.direction = RC.rotate(agent.direction, direction_increment)
+            draw_agent_direction()
+        elseif key == MFB.KB_KEY_RIGHT
+            img[start_i:stop_i, start_j:stop_j] .= black
+            draw_agent()
+            agent.direction = RC.rotate(agent.direction, direction_decrement)
             draw_agent_direction()
         elseif key == MFB.KB_KEY_ESCAPE
             MFB.mfb_close(window)

@@ -24,3 +24,6 @@ function generate_tile_map(height = 8, width = 8)
 
     return tile_map
 end
+
+rotate(x::T, y::T, c::T, s::T) where {T} = SA.SVector(c * x - s * y, s * x + c * y)
+rotate(vec, dir) where {T} = rotate(vec[1], vec[2], dir[1], dir[2])
