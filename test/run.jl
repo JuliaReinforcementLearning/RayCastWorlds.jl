@@ -22,8 +22,6 @@ const direction_decrement = SA.SVector(direction_increment[1], -direction_increm
 
 const agent = RC.Agent(SA.SVector(convert(T, 0.5), convert(T, 0.25)),
                  SA.SVector(convert(T, 1/sqrt(2)), convert(T, 1/sqrt(2))),
-                 speed_wu,
-                 radius_wu,
                 )
 
 # world
@@ -157,12 +155,12 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
 
         if key == MFB.KB_KEY_UP
             img[start_i:stop_i, start_j:stop_j] .= black
-            agent.position = agent.position + agent.speed * agent.direction
+            agent.position = agent.position + speed_wu * agent.direction
             draw_agent()
             draw_agent_direction()
         elseif key == MFB.KB_KEY_DOWN
             img[start_i:stop_i, start_j:stop_j] .= black
-            agent.position = agent.position - agent.speed * agent.direction
+            agent.position = agent.position - speed_wu * agent.direction
             draw_agent()
             draw_agent_direction()
         elseif key == MFB.KB_KEY_LEFT
