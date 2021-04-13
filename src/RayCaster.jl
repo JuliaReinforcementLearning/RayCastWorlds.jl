@@ -5,6 +5,5 @@ import MiniFB as MFB
 import StaticArrays as SA
 
 include("world.jl")
-include("render.jl")
 
 end
