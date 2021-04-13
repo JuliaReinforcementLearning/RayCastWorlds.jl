@@ -1,7 +1,7 @@
+import GridWorlds as GW
+import MiniFB as MFB
 import RayCaster as RC
 import StaticArrays as SA
-import MiniFB as MFB
-import GridWorlds as GW
 
 const T = Float32
 
@@ -50,9 +50,7 @@ const blue = MFB.mfb_rgb(0, 0, 255)
 # extras
 
 const pu_per_wu = height_img_pu / height_world_wu
-@show pu_per_wu
 const pu_per_tu = height_img_pu ÷ height_tm_tu
-@show pu_per_tu
 const tu_per_wu = height_tm_tu / height_world_wu
 
 # main
