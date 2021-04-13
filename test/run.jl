@@ -51,20 +51,21 @@ const blue = MFB.mfb_rgb(0, 0, 255)
 # extras
 
 const pu_per_wu = height_img_pu / height_world_wu
-const pu_per_tu = height_img_pu ÷ height_tm_tu
 const tu_per_wu = height_tm_tu / height_world_wu
+const pu_per_tu = height_img_pu ÷ height_tm_tu
 
 # main
 
-get_start_pu(i_tu::Integer) = (i_tu - 1) * pu_per_tu + 1
-get_start_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu)
-get_start_tu(i_pu::Integer) = (i_pu - 1) ÷ pu_per_tu + 1
-get_start_tu(x_wu::AbstractFloat) = floor(Int, x_wu * tu_per_wu)
+get_tile_start_pu(i_tu::Integer) = (i_tu - 1) * pu_per_tu + 1
 
-const radius_pu = get_start_pu(radius_wu)
+wu_to_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu) + 1
+wu_to_tu(x_wu::AbstractFloat) = floor(Int, x_wu * tu_per_wu) + 1
+pu_to_tu(i_pu::Integer) = (i_pu - 1) ÷ pu_per_tu + 1
 
-get_agent_center_i_pu() = get_start_pu(height_world_wu - agent.position[2])
-get_agent_center_j_pu() = get_start_pu(agent.position[1])
+const radius_pu = wu_to_pu(radius_wu)
+
+get_agent_center_i_pu() = wu_to_pu(height_world_wu - agent.position[2])
+get_agent_center_j_pu() = wu_to_pu(agent.position[1])
 get_agent_start_pu(center_pu) = center_pu - radius_pu + 1
 get_agent_stop_pu(center_pu) = center_pu + radius_pu + 1
 
@@ -72,8 +73,8 @@ function draw_tile_map()
     map(CartesianIndices((1:height_tm_tu, 1:width_tm_tu))) do pos
         if tm[GW.WALL, pos]
             i, j = pos.I
-            start_i = get_start_pu(i)
-            start_j = get_start_pu(j)
+            start_i = get_tile_start_pu(i)
+            start_j = get_tile_start_pu(j)
             stop_i = start_i + pu_per_tu - 1
             stop_j = start_j + pu_per_tu - 1
             img[start_i:stop_i, start_j:stop_j] .= white
@@ -140,8 +141,8 @@ end
 function draw_agent_direction()
     center_i = get_agent_center_i_pu()
     center_j = get_agent_center_j_pu()
-    stop_i = get_start_pu(height_world_wu - (agent.position[2] + radius_wu * agent.direction[2] / 2))
-    stop_j = get_start_pu(agent.position[1] + radius_wu * agent.direction[1] / 2)
+    stop_i = wu_to_pu(height_world_wu - (agent.position[2] + radius_wu * agent.direction[2] / 2))
+    stop_j = wu_to_pu(agent.position[1] + radius_wu * agent.direction[1] / 2)
     draw_line(center_i, center_j, stop_i, stop_j)
 
     return nothing
