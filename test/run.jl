@@ -16,11 +16,12 @@ const tm = RC.generate_tile_map(height_tm_tu, width_tm_tu)
 
 const radius_wu = convert(T, 0.05)
 const speed_wu = convert(T, 0.005)
+const theta_change_unit = convert(T, pi / 60)
+const direction_increment = SA.SVector(cos(theta_change_unit), sin(theta_change_unit))
+const direction_decrement = SA.SVector(direction_increment[1], -direction_increment[2])
 
 const agent = RC.Agent(SA.SVector(convert(T, 0.5), convert(T, 0.25)),
                  SA.SVector(convert(T, 1/sqrt(2)), convert(T, 1/sqrt(2))),
-                 speed_wu,
-                 radius_wu,
                 )
 
 # world
@@ -101,6 +102,45 @@ function draw_agent()
     return nothing
 end
 
+# Ref: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+function draw_line(i0::Int, j0::Int, i1::Int, j1::Int)
+    di = abs(i1-i0)
+    dj = -abs(j1-j0)
+    si = i0<i1 ? 1 : -1
+    sj = j0<j1 ? 1 : -1
+    err = di+dj
+
+    while true
+        img[i0, j0] = green
+
+        if (i0 == i1 && j0 == j1)
+            break
+        end
+
+        e2 = 2*err
+
+        if (e2 >= dj)
+            err += dj
+            i0 += si
+        end
+
+        if (e2 <= di)
+            err += di
+            j0 += sj
+        end
+    end
+
+    return nothing
+end
+
+function draw_agent_direction()
+    center_i = get_start_pu(height_world_wu - agent.position[2])
+    center_j = get_start_pu(agent.position[1])
+    stop_i = get_start_pu(height_world_wu - (agent.position[2] + radius_wu * agent.direction[2] / 2))
+    stop_j = get_start_pu(agent.position[1] + radius_wu * agent.direction[1] / 2)
+    draw_line(center_i, center_j, stop_i, stop_j)
+end
+
 function keyboard_callback(window, key, mod, isPressed)::Cvoid
     if isPressed
         display(key)
@@ -115,12 +155,24 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
 
         if key == MFB.KB_KEY_UP
             img[start_i:stop_i, start_j:stop_j] .= black
-            agent.position = agent.position .+ agent.speed
+            agent.position = agent.position + speed_wu * agent.direction
             draw_agent()
+            draw_agent_direction()
         elseif key == MFB.KB_KEY_DOWN
             img[start_i:stop_i, start_j:stop_j] .= black
-            agent.position = agent.position .- agent.speed
+            agent.position = agent.position - speed_wu * agent.direction
             draw_agent()
+            draw_agent_direction()
+        elseif key == MFB.KB_KEY_LEFT
+            img[start_i:stop_i, start_j:stop_j] .= black
+            draw_agent()
+            agent.direction = RC.rotate(agent.direction, direction_increment)
+            draw_agent_direction()
+        elseif key == MFB.KB_KEY_RIGHT
+            img[start_i:stop_i, start_j:stop_j] .= black
+            draw_agent()
+            agent.direction = RC.rotate(agent.direction, direction_decrement)
+            draw_agent_direction()
         elseif key == MFB.KB_KEY_ESCAPE
             MFB.mfb_close(window)
         end
@@ -135,6 +187,7 @@ function render()
 
     draw_tile_map()
     draw_agent()
+    draw_agent_direction()
 
     while MFB.mfb_wait_sync(window)
 
