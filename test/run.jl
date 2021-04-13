@@ -67,7 +67,7 @@ get_tile_start_pu(i_tu::Integer) = (i_tu - 1) * pu_per_tu + 1
 get_agent_center_i_pu() = wu_to_pu(height_world_wu - agent.position[2])
 get_agent_center_j_pu() = wu_to_pu(agent.position[1])
 get_agent_start_pu(center_pu) = center_pu - radius_pu + 1
-get_agent_stop_pu(center_pu) = center_pu + radius_pu + 1
+get_agent_stop_pu(center_pu) = center_pu + radius_pu - 1
 
 function draw_tile_map()
     map(CartesianIndices((1:height_tm_tu, 1:width_tm_tu))) do pos
