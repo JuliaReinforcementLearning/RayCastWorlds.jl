@@ -143,6 +143,8 @@ function draw_agent_direction()
     stop_i = get_start_pu(height_world_wu - (agent.position[2] + radius_wu * agent.direction[2] / 2))
     stop_j = get_start_pu(agent.position[1] + radius_wu * agent.direction[1] / 2)
     draw_line(center_i, center_j, stop_i, stop_j)
+
+    return nothing
 end
 
 function clear_agent()
@@ -201,6 +203,8 @@ function render()
     end
 
     MFB.mfb_close(window)
+
+    return nothing
 end
 
 render()
