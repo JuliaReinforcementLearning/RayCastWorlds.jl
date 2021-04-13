@@ -58,28 +58,41 @@ wu_to_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu) + 1
 wu_to_tu(x_wu::AbstractFloat) = floor(Int, x_wu * tu_per_wu) + 1
 pu_to_tu(i_pu::Integer) = (i_pu - 1) ÷ pu_per_tu + 1
 
-# main
+# tile map region
+
+get_tile_map_region_tu() = CartesianIndices((1:height_tm_tu, 1:width_tm_tu))
+
+# tile region
+
+get_tile_top_left_pu(tile_tu) = (tile_tu .- 1) .* pu_per_tu .+ 1
+get_tile_bottom_right_pu(tile_tu) = tile_tu .* pu_per_tu
+function get_tile_region_pu(tile_tu)
+    start_i, start_j = get_tile_top_left_pu(tile_tu)
+    stop_i, stop_j = get_tile_bottom_right_pu(tile_tu)
+    return CartesianIndices((start_i:stop_i, start_j:stop_j))
+end
+
+# agent region
 
 const radius_pu = wu_to_pu(radius_wu)
 
-get_tile_start_pu(i_tu::Integer) = (i_tu - 1) * pu_per_tu + 1
+get_agent_center_pu() = (wu_to_pu(height_world_wu - agent.position[2]), wu_to_pu(agent.position[1]))
+get_agent_top_left_pu(center_pu) = center_pu .- (radius_pu - 1)
+get_agent_bottom_right_pu(center_pu) = center_pu .+ (radius_pu - 1)
+function get_agent_region_pu(center_pu)
+    start_i, start_j = get_agent_top_left_pu(center_pu)
+    stop_i, stop_j = get_agent_bottom_right_pu(center_pu)
+    return CartesianIndices((start_i:stop_i, start_j:stop_j))
+end
+get_agent_region_pu() = get_agent_region_pu(get_agent_center_pu())
 
-get_agent_center_i_pu() = wu_to_pu(height_world_wu - agent.position[2])
-get_agent_center_j_pu() = wu_to_pu(agent.position[1])
-get_agent_start_pu(center_pu) = center_pu - radius_pu + 1
-get_agent_stop_pu(center_pu) = center_pu + radius_pu - 1
+# main
 
 function draw_tile_map()
-    map(CartesianIndices((1:height_tm_tu, 1:width_tm_tu))) do pos
+    map(get_tile_map_region_tu()) do pos
         if tm[GW.WALL, pos]
-            i, j = pos.I
-            start_i = get_tile_start_pu(i)
-            start_j = get_tile_start_pu(j)
-            stop_i = start_i + pu_per_tu - 1
-            stop_j = start_j + pu_per_tu - 1
-            img[start_i:stop_i, start_j:stop_j] .= white
+            img[get_tile_region_pu(pos.I)] .= white
         end
-
         return nothing
     end
 
@@ -87,20 +100,12 @@ function draw_tile_map()
 end
 
 function draw_agent()
-    center_i = get_agent_center_i_pu()
-    center_j = get_agent_center_j_pu()
-    start_i = get_agent_start_pu(center_i)
-    start_j = get_agent_start_pu(center_j)
-    stop_i = get_agent_stop_pu(center_i)
-    stop_j = get_agent_stop_pu(center_j)
+    center_pu = get_agent_center_pu()
 
-    map(CartesianIndices((start_i:stop_i, start_j:stop_j))) do pos
-        i, j = pos.I
-
-        if (i - center_i) ^ 2 + (j - center_j) ^ 2 <= radius_pu ^ 2
+    map(get_agent_region_pu(center_pu)) do pos
+        if sum((pos.I .- center_pu) .^ 2) <= radius_pu ^ 2
             img[pos] = gray
         end
-
         return nothing
     end
 
@@ -139,24 +144,15 @@ function draw_line(i0::Int, j0::Int, i1::Int, j1::Int)
 end
 
 function draw_agent_direction()
-    center_i = get_agent_center_i_pu()
-    center_j = get_agent_center_j_pu()
-    stop_i = wu_to_pu(height_world_wu - (agent.position[2] + radius_wu * agent.direction[2] / 2))
-    stop_j = wu_to_pu(agent.position[1] + radius_wu * agent.direction[1] / 2)
-    draw_line(center_i, center_j, stop_i, stop_j)
-
+    i0, j0 = get_agent_center_pu()
+    i1 = wu_to_pu(height_world_wu - (agent.position[2] + radius_wu * agent.direction[2] / 2))
+    j1 = wu_to_pu(agent.position[1] + radius_wu * agent.direction[1] / 2)
+    draw_line(i0, j0, i1, j1)
     return nothing
 end
 
 function clear_agent()
-    center_i = get_agent_center_i_pu()
-    center_j = get_agent_center_j_pu()
-    start_i = get_agent_start_pu(center_i)
-    start_j = get_agent_start_pu(center_j)
-    stop_i = get_agent_stop_pu(center_i)
-    stop_j = get_agent_stop_pu(center_j)
-    img[start_i:stop_i, start_j:stop_j] .= black
-
+    img[get_agent_region_pu()] .= black
     return nothing
 end
 
@@ -195,7 +191,6 @@ function render()
     draw_agent_direction()
 
     while MFB.mfb_wait_sync(window)
-
         state = MFB.mfb_update(window, permutedims!(fb, img, (2, 1)))
 
         if state != MFB.STATE_OK
