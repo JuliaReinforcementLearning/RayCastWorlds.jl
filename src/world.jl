@@ -25,3 +25,6 @@ end
 
 rotate(x, y, c, s) = SA.SVector(c * x - s * y, s * x + c * y)
 rotate(vec, dir) = rotate(vec[1], vec[2], dir[1], dir[2])
+rotate_plus_90(vec::SA.SVector{2}) = typeof(vec)(-vec[2], vec[1])
+rotate_minus_90(vec::SA.SVector{2}) = typeof(vec)(vec[2], -vec[1])
+rotate_180(vec::SA.SVector{2}) = -vec
