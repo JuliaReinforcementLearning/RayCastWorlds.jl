@@ -1,6 +1,7 @@
 mutable struct Agent{T}
     position::SA.SVector{2, T}
     direction::SA.SVector{2, T}
+    camera_plane::SA.SVector{2, T}
 end
 
 struct World{T}
