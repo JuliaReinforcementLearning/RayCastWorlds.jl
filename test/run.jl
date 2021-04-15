@@ -32,7 +32,7 @@ const agent = RC.Agent(agent_position,
 
 # rays
 
-const num_rays = 5
+const num_rays = 32
 const semi_fov = convert(T, pi / 6)
 const width_ray_pu = 8
 
@@ -54,6 +54,7 @@ const world = RC.World(tm, height_world_wu, width_world_wu, agent)
 const height_tv_pu = 256
 const width_tv_pu = 512
 
+const height_av_pu = height_tv_pu
 const width_av_pu = width_ray_pu * num_rays
 
 const height_fb_pu = height_tv_pu
@@ -203,11 +204,30 @@ map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
 
 function draw_rays()
     ray_start_pu = get_agent_center_pu()
-    map(get_rays()) do ray_dir
-        ray_stop_wu, hit_pos_tu = cast_ray(ray_dir)
+    agent_position = agent.position
+    agent_direction = agent.direction
+    ray_dirs = get_rays()
+
+    for (idx, ray_dir) in enumerate(ray_dirs)
+        dist, hit_pos_tu = cast_ray(ray_dir)
+        ray_stop_wu = agent_position + dist * ray_dir
         ray_stop_pu = wu_to_pu(ray_stop_wu)
         draw_line(ray_start_pu..., ray_stop_pu...)
-        return nothing
+
+        per_dist = dist * sum(agent_direction .* ray_dir)
+        height_line_pu = floor(Int, height_av_pu / per_dist)
+
+        ray_start_j_pu = (idx - 1) * width_ray_pu + 1
+        ray_stop_j_pu = idx * width_ray_pu
+
+        if height_line_pu >= height_av_pu - 1
+            av[:, ray_start_j_pu:ray_stop_j_pu] .= gray
+        else
+            padding_pu = (height_av_pu - height_line_pu) ÷ 2
+            av[1:padding_pu, ray_start_j_pu:ray_stop_j_pu] .= white
+            av[padding_pu + 1 : end - padding_pu, ray_start_j_pu:ray_stop_j_pu] .= gray
+            av[end - padding_pu + 1 : end, ray_start_j_pu:ray_stop_j_pu] .= black
+        end
     end
 
     return nothing
@@ -261,9 +281,7 @@ function cast_ray(ray_dir)
         end
     end
 
-    ray_stop_wu = agent.position + dist * ray_dir
-
-    return ray_stop_wu, hit_pos_tu
+    return dist, hit_pos_tu
 end
 
 function keyboard_callback(window, key, mod, isPressed)::Cvoid
@@ -314,7 +332,7 @@ function render()
     draw_agent()
     draw_agent_direction()
     draw_rays()
-    av[:, :] .= blue
+    av[:, :] .= black
 
     while MFB.mfb_wait_sync(window)
         state = MFB.mfb_update(window, permutedims!(fb, img, (2, 1)))
