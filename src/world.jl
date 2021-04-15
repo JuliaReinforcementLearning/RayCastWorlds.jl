@@ -21,14 +21,14 @@ function generate_tile_map(height = 8, width = 8)
     return tile_map
 end
 
-function generate_tile_map(tm_layout::Matrix{String})
+function generate_tile_map(tm_layout::Matrix{Int})
     height = size(tm_layout, 1)
     width = size(tm_layout, 2)
     objects = (GW.WALL,)
     tile_map = GW.GridWorldBase(objects, height, width)
 
     for pos in keys(tm_layout)
-        if tm_layout[pos] == "1"
+        if tm_layout[pos] == 1
             tile_map[GW.WALL, pos] = true
         end
     end
