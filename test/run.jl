@@ -10,7 +10,17 @@ const T = Float32
 const height_tm_tu = 8
 const width_tm_tu = 16
 
-const tm = RC.generate_tile_map(height_tm_tu, width_tm_tu)
+tm_layout = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+             1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
+             1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
+             1 0 0 1 0 0 0 0 1 0 0 0 0 0 0 1
+             1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1
+             1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+             1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+            ]
+
+const tm = RC.generate_tile_map(tm_layout)
 
 # agent
 
@@ -32,8 +42,9 @@ const agent = RC.Agent(agent_position,
 
 # rays
 
-const num_rays = 5
+const num_rays = 32
 const semi_fov = convert(T, pi / 6)
+const width_ray_pu = 8
 
 function get_rays()
     agent_direction = agent.direction
@@ -50,26 +61,35 @@ const world = RC.World(tm, height_world_wu, width_world_wu, agent)
 
 # img
 
-const height_img_pu = 256
-const width_img_pu = 512
+const height_tv_pu = 256
+const width_tv_pu = 512
 
-const img = zeros(UInt32, height_img_pu, width_img_pu)
-const fb = zeros(UInt32, width_img_pu, height_img_pu)
+const height_av_pu = height_tv_pu
+const width_av_pu = width_ray_pu * num_rays
+
+const height_fb_pu = height_tv_pu
+const width_fb_pu = width_tv_pu + width_av_pu
+
+const img = zeros(UInt32, height_fb_pu, width_fb_pu)
+const tv = view(img, :, 1:width_tv_pu)
+const av = view(img, :, width_tv_pu + 1 : width_fb_pu)
+const fb = zeros(UInt32, width_fb_pu, height_fb_pu)
 
 # colors
 
 const black = MFB.mfb_rgb(0, 0, 0)
 const white = MFB.mfb_rgb(255, 255, 255)
 const gray = MFB.mfb_rgb(127, 127, 127)
+const dark_gray = MFB.mfb_rgb(95, 95, 95)
 const red = MFB.mfb_rgb(255, 0, 0)
 const green = MFB.mfb_rgb(0, 255, 0)
 const blue = MFB.mfb_rgb(0, 0, 255)
 
 # units
 
-const pu_per_wu = height_img_pu / height_world_wu
+const pu_per_wu = height_tv_pu / height_world_wu
 const tu_per_wu = height_tm_tu / height_world_wu
-const pu_per_tu = height_img_pu ÷ height_tm_tu
+const pu_per_tu = height_tv_pu ÷ height_tm_tu
 
 wu_to_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu) + 1
 wu_to_pu((x_wu, y_wu)) = (wu_to_pu(height_world_wu - y_wu), wu_to_pu(x_wu))
@@ -108,14 +128,14 @@ get_agent_region_pu() = get_agent_region_pu(get_agent_center_pu())
 # main
 
 function clear_screen()
-    img[:, :] .= black
+    tv[:, :] .= black
     return nothing
 end
 
 function draw_tile_map()
     map(get_tile_map_region_tu()) do pos
         if tm[GW.WALL, pos]
-            img[get_tile_region_pu(pos.I)] .= white
+            tv[get_tile_region_pu(pos.I)] .= white
         end
         return nothing
     end
@@ -124,8 +144,8 @@ function draw_tile_map()
 end
 
 function draw_tile_map_boundaries()
-    img[1:pu_per_tu:height_img_pu, :] .= gray
-    img[:, 1:pu_per_tu:width_img_pu] .= gray
+    tv[1:pu_per_tu:height_tv_pu, :] .= gray
+    tv[:, 1:pu_per_tu:width_tv_pu] .= gray
     return nothing
 end
 
@@ -134,7 +154,7 @@ function draw_agent()
 
     map(get_agent_region_pu(center_pu)) do pos
         if sum((pos.I .- center_pu) .^ 2) <= radius_pu ^ 2
-            img[pos] = green
+            tv[pos] = green
         end
         return nothing
     end
@@ -151,7 +171,7 @@ function draw_line(i0::Int, j0::Int, i1::Int, j1::Int)
     err = di+dj
 
     while true
-        img[i0, j0] = red
+        tv[i0, j0] = red
 
         if (i0 == i1 && j0 == j1)
             break
@@ -182,7 +202,7 @@ function draw_agent_direction()
 end
 
 function clear_agent()
-    img[get_agent_region_pu()] .= black
+    tv[get_agent_region_pu()] .= black
     return nothing
 end
 
@@ -193,7 +213,42 @@ end
 
 map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
 
-cast_rays() = map(ray -> cast_ray(ray), get_rays())
+function draw_rays()
+    ray_start_pu = get_agent_center_pu()
+    agent_position = agent.position
+    agent_direction = agent.direction
+    ray_dirs = get_rays()
+
+    for (idx, ray_dir) in enumerate(ray_dirs)
+        dist, side, hit_pos_tu = cast_ray(ray_dir)
+        ray_stop_wu = agent_position + dist * ray_dir
+        ray_stop_pu = wu_to_pu(ray_stop_wu)
+        draw_line(ray_start_pu..., ray_stop_pu...)
+
+        per_dist = dist * sum(agent_direction .* ray_dir)
+        height_line_pu = floor(Int, height_av_pu / per_dist)
+
+        ray_start_j_pu = (num_rays - idx) * width_ray_pu + 1
+        ray_stop_j_pu = (num_rays - idx + 1) * width_ray_pu
+
+        if side == 1
+            wall_color = dark_gray
+        else
+            wall_color = gray
+        end
+
+        if height_line_pu >= height_av_pu - 1
+            av[:, ray_start_j_pu:ray_stop_j_pu] .= wall_color
+        else
+            padding_pu = (height_av_pu - height_line_pu) ÷ 2
+            av[1:padding_pu, ray_start_j_pu:ray_stop_j_pu] .= white
+            av[padding_pu + 1 : end - padding_pu, ray_start_j_pu:ray_stop_j_pu] .= wall_color
+            av[end - padding_pu + 1 : end, ray_start_j_pu:ray_stop_j_pu] .= black
+        end
+    end
+
+    return nothing
+end
 
 function cast_ray(ray_dir)
     pos_x, pos_y = agent.position
@@ -222,6 +277,8 @@ function cast_ray(ray_dir)
 
     hit = 0
     dist = Inf
+    hit_pos_tu = (1, 1)
+    side = 0
 
     while (hit == 0)
         dist = min(side_dist_x, side_dist_y)
@@ -236,16 +293,13 @@ function cast_ray(ray_dir)
             side = 1
         end
 
-        if tm[GW.WALL, map_to_tu((map_x, map_y))...]
+        hit_pos_tu = map_to_tu((map_x, map_y))
+        if tm[GW.WALL, hit_pos_tu...]
             hit = 1
         end
     end
 
-    ray_start_pu = get_agent_center_pu()
-    ray_stop_pu = wu_to_pu(agent.position + dist * ray_dir)
-    draw_line(ray_start_pu..., ray_stop_pu...)
-
-    return nothing
+    return dist, side, hit_pos_tu
 end
 
 function keyboard_callback(window, key, mod, isPressed)::Cvoid
@@ -281,21 +335,21 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
         draw_tile_map_boundaries()
         draw_agent()
         draw_agent_direction()
-        cast_rays()
+        draw_rays()
     end
 
     return nothing
 end
 
 function render()
-    window = MFB.mfb_open("Test", width_img_pu, height_img_pu)
+    window = MFB.mfb_open("Test", width_fb_pu, height_fb_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     draw_tile_map()
     draw_tile_map_boundaries()
     draw_agent()
     draw_agent_direction()
-    cast_rays()
+    draw_rays()
 
     while MFB.mfb_wait_sync(window)
         state = MFB.mfb_update(window, permutedims!(fb, img, (2, 1)))
