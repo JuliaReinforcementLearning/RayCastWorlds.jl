@@ -30,12 +30,15 @@ const agent = RC.Agent(agent_position,
                        camera_plane,
                       )
 
-# ray
+# rays
+
+const num_rays = 5
+const semi_fov = convert(T, pi / 6)
 
 function get_rays()
     agent_direction = agent.direction
-    camera_plane = agent.camera_plane
-    return map(d -> agent_direction + d * camera_plane, -1:0.5:1)
+    agent_angle = atan(agent_direction[2], agent_direction[1])
+    return map(theta -> SA.SVector(cos(theta), sin(theta)), range(agent_angle - semi_fov, agent_angle + semi_fov, length = num_rays))
 end
 
 # world
@@ -192,21 +195,16 @@ map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
 
 cast_rays() = map(ray -> cast_ray(ray), get_rays())
 
-function cast_ray(ray)
+function cast_ray(ray_dir)
     pos_x, pos_y = agent.position
     map_x = wu_to_tu(pos_x) - 1
     map_y = wu_to_tu(pos_y) - 1
 
-    ray_dir = ray
-
     ray_dir_x, ray_dir_y = ray_dir
-    # delta_dist_x = abs(1 / ray_dir_x)
-    # delta_dist_y = abs(1 / ray_dir_y)
-    ray_dir_norm = sqrt(sum(ray_dir_x ^ 2 + ray_dir_y ^ 2))
-    delta_dist_x = abs(ray_dir_norm / ray_dir_x)
-    delta_dist_y = abs(ray_dir_norm / ray_dir_y)
+    delta_dist_x = abs(1 / ray_dir_x)
+    delta_dist_y = abs(1 / ray_dir_y)
 
-    if ray_dir_x < zero(ray_dir_x)
+    if ray_dir_x < zero(T)
         step_x = -1
         side_dist_x = (pos_x - map_x) * delta_dist_x
     else
@@ -214,7 +212,7 @@ function cast_ray(ray)
         side_dist_x = (map_x + 1 - pos_x) * delta_dist_x
     end
 
-    if ray_dir_y < zero(ray_dir_y)
+    if ray_dir_y < zero(T)
         step_y = -1
         side_dist_y = (pos_y - map_y) * delta_dist_y
     else
@@ -223,7 +221,7 @@ function cast_ray(ray)
     end
 
     hit = 0
-    dist = -1
+    dist = Inf
 
     while (hit == 0)
         dist = min(side_dist_x, side_dist_y)
@@ -243,9 +241,9 @@ function cast_ray(ray)
         end
     end
 
-    ray_head = agent.position + dist * ray_dir / ray_dir_norm
-    center_pu = get_agent_center_pu()
-    draw_line(center_pu..., wu_to_pu(ray_head)...)
+    ray_start_pu = get_agent_center_pu()
+    ray_stop_pu = wu_to_pu(agent.position + dist * ray_dir)
+    draw_line(ray_start_pu..., ray_stop_pu...)
 
     return nothing
 end
