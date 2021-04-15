@@ -14,20 +14,37 @@ const tm = RC.generate_tile_map(height_tm_tu, width_tm_tu)
 
 # agent
 
-const radius_wu = convert(T, 0.05)
-const speed_wu = convert(T, 0.005)
-const theta_change_unit = convert(T, pi / 60)
-const direction_increment = SA.SVector(cos(theta_change_unit), sin(theta_change_unit))
+const theta_30 = convert(T, pi / 6)
+const radius_wu = convert(T, 0.5)
+const position_increment = convert(T, 0.05)
+const theta_increment = convert(T, pi / 60)
+const direction_increment = SA.SVector(cos(theta_increment), sin(theta_increment))
 const direction_decrement = SA.SVector(direction_increment[1], -direction_increment[2])
 
-const agent = RC.Agent(SA.SVector(convert(T, 0.5), convert(T, 0.25)),
-                 SA.SVector(convert(T, 1/sqrt(2)), convert(T, 1/sqrt(2))),
-                )
+agent_position = SA.SVector(convert(T, 4.5), convert(T, 2.5))
+agent_direction = SA.SVector(cos(theta_30), sin(theta_30))
+camera_plane = RC.rotate_minus_90(agent_direction)
+
+const agent = RC.Agent(agent_position,
+                       agent_direction,
+                       camera_plane,
+                      )
+
+# rays
+
+const num_rays = 5
+const semi_fov = convert(T, pi / 6)
+
+function get_rays()
+    agent_direction = agent.direction
+    agent_angle = atan(agent_direction[2], agent_direction[1])
+    return map(theta -> SA.SVector(cos(theta), sin(theta)), range(agent_angle - semi_fov, agent_angle + semi_fov, length = num_rays))
+end
 
 # world
 
-const height_world_wu = convert(T, 1)
-const width_world_wu = convert(T, 2)
+const height_world_wu = convert(T, 8)
+const width_world_wu = convert(T, 16)
 
 const world = RC.World(tm, height_world_wu, width_world_wu, agent)
 
@@ -90,6 +107,11 @@ get_agent_region_pu() = get_agent_region_pu(get_agent_center_pu())
 
 # main
 
+function clear_screen()
+    img[:, :] .= black
+    return nothing
+end
+
 function draw_tile_map()
     map(get_tile_map_region_tu()) do pos
         if tm[GW.WALL, pos]
@@ -101,12 +123,18 @@ function draw_tile_map()
     return nothing
 end
 
+function draw_tile_map_boundaries()
+    img[1:pu_per_tu:height_img_pu, :] .= gray
+    img[:, 1:pu_per_tu:width_img_pu] .= gray
+    return nothing
+end
+
 function draw_agent()
     center_pu = get_agent_center_pu()
 
     map(get_agent_region_pu(center_pu)) do pos
         if sum((pos.I .- center_pu) .^ 2) <= radius_pu ^ 2
-            img[pos] = gray
+            img[pos] = green
         end
         return nothing
     end
@@ -123,7 +151,7 @@ function draw_line(i0::Int, j0::Int, i1::Int, j1::Int)
     err = di+dj
 
     while true
-        img[i0, j0] = green
+        img[i0, j0] = red
 
         if (i0 == i1 && j0 == j1)
             break
@@ -148,7 +176,7 @@ end
 function draw_agent_direction()
     i0, j0 = get_agent_center_pu()
     i1 = wu_to_pu(height_world_wu - (agent.position[2] + radius_wu * agent.direction[2] / 2))
-    j1 = wu_to_pu(agent.position[1] + radius_wu * agent.direction[1] / 2)
+    j1 = wu_to_pu(agent.position[1] + radius_wu * agent.direction[1] * 3 / 4)
     draw_line(i0, j0, i1, j1)
     return nothing
 end
@@ -163,33 +191,97 @@ function is_agent_colliding(center_wu)
     return tm[GW.WALL, wu_to_tu((x_wu + radius_wu, y_wu))...] || tm[GW.WALL, wu_to_tu((x_wu, y_wu + radius_wu))...] || tm[GW.WALL, wu_to_tu((x_wu - radius_wu, y_wu))...] || tm[GW.WALL, wu_to_tu((x_wu, y_wu - radius_wu))...]
 end
 
+map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
+
+cast_rays() = map(ray -> cast_ray(ray), get_rays())
+
+function cast_ray(ray_dir)
+    pos_x, pos_y = agent.position
+    map_x = wu_to_tu(pos_x) - 1
+    map_y = wu_to_tu(pos_y) - 1
+
+    ray_dir_x, ray_dir_y = ray_dir
+    delta_dist_x = abs(1 / ray_dir_x)
+    delta_dist_y = abs(1 / ray_dir_y)
+
+    if ray_dir_x < zero(T)
+        step_x = -1
+        side_dist_x = (pos_x - map_x) * delta_dist_x
+    else
+        step_x = 1
+        side_dist_x = (map_x + 1 - pos_x) * delta_dist_x
+    end
+
+    if ray_dir_y < zero(T)
+        step_y = -1
+        side_dist_y = (pos_y - map_y) * delta_dist_y
+    else
+        step_y = 1
+        side_dist_y = (map_y + 1 - pos_y) * delta_dist_y
+    end
+
+    hit = 0
+    dist = Inf
+
+    while (hit == 0)
+        dist = min(side_dist_x, side_dist_y)
+
+        if (side_dist_x < side_dist_y)
+            side_dist_x += delta_dist_x
+            map_x += step_x
+            side = 0
+        else
+            side_dist_y += delta_dist_y
+            map_y += step_y
+            side = 1
+        end
+
+        if tm[GW.WALL, map_to_tu((map_x, map_y))...]
+            hit = 1
+        end
+    end
+
+    ray_start_pu = get_agent_center_pu()
+    ray_stop_pu = wu_to_pu(agent.position + dist * ray_dir)
+    draw_line(ray_start_pu..., ray_stop_pu...)
+
+    return nothing
+end
+
 function keyboard_callback(window, key, mod, isPressed)::Cvoid
     if isPressed
         display(key)
         println()
 
-        clear_agent()
+        clear_screen()
 
         if key == MFB.KB_KEY_UP
-            new_position = agent.position + speed_wu * agent.direction
+            new_position = agent.position + position_increment * agent.direction
             if !is_agent_colliding(new_position)
                 agent.position = new_position
             end
         elseif key == MFB.KB_KEY_DOWN
-            new_position = agent.position - speed_wu * agent.direction
+            new_position = agent.position - position_increment * agent.direction
             if !is_agent_colliding(new_position)
                 agent.position = new_position
             end
         elseif key == MFB.KB_KEY_LEFT
-            agent.direction = RC.rotate(agent.direction, direction_increment)
+            new_direction = RC.rotate(agent.direction, direction_increment)
+            agent.direction = new_direction
+            agent.camera_plane = RC.rotate_minus_90(new_direction)
         elseif key == MFB.KB_KEY_RIGHT
-            agent.direction = RC.rotate(agent.direction, direction_decrement)
+            new_direction = RC.rotate(agent.direction, direction_decrement)
+            agent.direction = new_direction
+            agent.camera_plane = RC.rotate_minus_90(new_direction)
         elseif key == MFB.KB_KEY_ESCAPE
             MFB.mfb_close(window)
         end
 
+        draw_tile_map()
+        draw_tile_map_boundaries()
         draw_agent()
         draw_agent_direction()
+        cast_rays()
     end
 
     return nothing
@@ -200,8 +292,10 @@ function render()
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     draw_tile_map()
+    draw_tile_map_boundaries()
     draw_agent()
     draw_agent_direction()
+    cast_rays()
 
     while MFB.mfb_wait_sync(window)
         state = MFB.mfb_update(window, permutedims!(fb, img, (2, 1)))

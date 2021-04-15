@@ -1,6 +1,7 @@
 mutable struct Agent{T}
     position::SA.SVector{2, T}
     direction::SA.SVector{2, T}
+    camera_plane::SA.SVector{2, T}
 end
 
 struct World{T}
@@ -23,5 +24,8 @@ function generate_tile_map(height = 8, width = 8)
     return tile_map
 end
 
-rotate(x::T, y::T, c::T, s::T) where {T} = SA.SVector(c * x - s * y, s * x + c * y)
-rotate(vec, dir) where {T} = rotate(vec[1], vec[2], dir[1], dir[2])
+rotate(x, y, c, s) = SA.SVector(c * x - s * y, s * x + c * y)
+rotate(vec, dir) = rotate(vec[1], vec[2], dir[1], dir[2])
+rotate_plus_90(vec) = typeof(vec)(-vec[2], vec[1])
+rotate_minus_90(vec) = typeof(vec)(vec[2], -vec[1])
+rotate_180(vec) = -vec
