@@ -34,6 +34,7 @@ const agent = RC.Agent(agent_position,
 
 const num_rays = 5
 const semi_fov = convert(T, pi / 6)
+const width_ray_pu = 8
 
 function get_rays()
     agent_direction = agent.direction
@@ -53,7 +54,7 @@ const world = RC.World(tm, height_world_wu, width_world_wu, agent)
 const height_tv_pu = 256
 const width_tv_pu = 512
 
-const width_av_pu = 8 * num_rays
+const width_av_pu = width_ray_pu * num_rays
 
 const height_fb_pu = height_tv_pu
 const width_fb_pu = width_tv_pu + width_av_pu
@@ -200,7 +201,17 @@ end
 
 map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
 
-cast_rays() = map(ray -> cast_ray(ray), get_rays())
+function draw_rays()
+    ray_start_pu = get_agent_center_pu()
+    map(get_rays()) do ray_dir
+        ray_stop_wu, hit_pos_tu = cast_ray(ray_dir)
+        ray_stop_pu = wu_to_pu(ray_stop_wu)
+        draw_line(ray_start_pu..., ray_stop_pu...)
+        return nothing
+    end
+
+    return nothing
+end
 
 function cast_ray(ray_dir)
     pos_x, pos_y = agent.position
@@ -229,6 +240,7 @@ function cast_ray(ray_dir)
 
     hit = 0
     dist = Inf
+    hit_pos_tu = (1, 1)
 
     while (hit == 0)
         dist = min(side_dist_x, side_dist_y)
@@ -243,16 +255,15 @@ function cast_ray(ray_dir)
             side = 1
         end
 
-        if tm[GW.WALL, map_to_tu((map_x, map_y))...]
+        hit_pos_tu = map_to_tu((map_x, map_y))
+        if tm[GW.WALL, hit_pos_tu...]
             hit = 1
         end
     end
 
-    ray_start_pu = get_agent_center_pu()
-    ray_stop_pu = wu_to_pu(agent.position + dist * ray_dir)
-    draw_line(ray_start_pu..., ray_stop_pu...)
+    ray_stop_wu = agent.position + dist * ray_dir
 
-    return nothing
+    return ray_stop_wu, hit_pos_tu
 end
 
 function keyboard_callback(window, key, mod, isPressed)::Cvoid
@@ -288,7 +299,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
         draw_tile_map_boundaries()
         draw_agent()
         draw_agent_direction()
-        cast_rays()
+        draw_rays()
     end
 
     return nothing
@@ -302,7 +313,7 @@ function render()
     draw_tile_map_boundaries()
     draw_agent()
     draw_agent_direction()
-    cast_rays()
+    draw_rays()
     av[:, :] .= blue
 
     while MFB.mfb_wait_sync(window)
