@@ -70,6 +70,7 @@ const fb = zeros(UInt32, width_fb_pu, height_fb_pu)
 const black = MFB.mfb_rgb(0, 0, 0)
 const white = MFB.mfb_rgb(255, 255, 255)
 const gray = MFB.mfb_rgb(127, 127, 127)
+const dark_gray = MFB.mfb_rgb(95, 95, 95)
 const red = MFB.mfb_rgb(255, 0, 0)
 const green = MFB.mfb_rgb(0, 255, 0)
 const blue = MFB.mfb_rgb(0, 0, 255)
@@ -209,7 +210,7 @@ function draw_rays()
     ray_dirs = get_rays()
 
     for (idx, ray_dir) in enumerate(ray_dirs)
-        dist, hit_pos_tu = cast_ray(ray_dir)
+        dist, side, hit_pos_tu = cast_ray(ray_dir)
         ray_stop_wu = agent_position + dist * ray_dir
         ray_stop_pu = wu_to_pu(ray_stop_wu)
         draw_line(ray_start_pu..., ray_stop_pu...)
@@ -220,12 +221,18 @@ function draw_rays()
         ray_start_j_pu = (num_rays - idx) * width_ray_pu + 1
         ray_stop_j_pu = (num_rays - idx + 1) * width_ray_pu
 
+        if side == 1
+            wall_color = dark_gray
+        else
+            wall_color = gray
+        end
+
         if height_line_pu >= height_av_pu - 1
-            av[:, ray_start_j_pu:ray_stop_j_pu] .= gray
+            av[:, ray_start_j_pu:ray_stop_j_pu] .= wall_color
         else
             padding_pu = (height_av_pu - height_line_pu) ÷ 2
             av[1:padding_pu, ray_start_j_pu:ray_stop_j_pu] .= white
-            av[padding_pu + 1 : end - padding_pu, ray_start_j_pu:ray_stop_j_pu] .= gray
+            av[padding_pu + 1 : end - padding_pu, ray_start_j_pu:ray_stop_j_pu] .= wall_color
             av[end - padding_pu + 1 : end, ray_start_j_pu:ray_stop_j_pu] .= black
         end
     end
@@ -261,6 +268,7 @@ function cast_ray(ray_dir)
     hit = 0
     dist = Inf
     hit_pos_tu = (1, 1)
+    side = 0
 
     while (hit == 0)
         dist = min(side_dist_x, side_dist_y)
@@ -281,7 +289,7 @@ function cast_ray(ray_dir)
         end
     end
 
-    return dist, hit_pos_tu
+    return dist, side, hit_pos_tu
 end
 
 function keyboard_callback(window, key, mod, isPressed)::Cvoid
