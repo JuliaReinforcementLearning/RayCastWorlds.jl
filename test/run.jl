@@ -340,7 +340,6 @@ function render()
     draw_agent()
     draw_agent_direction()
     draw_rays()
-    av[:, :] .= black
 
     while MFB.mfb_wait_sync(window)
         state = MFB.mfb_update(window, permutedims!(fb, img, (2, 1)))
