@@ -217,8 +217,8 @@ function draw_rays()
         per_dist = dist * sum(agent_direction .* ray_dir)
         height_line_pu = floor(Int, height_av_pu / per_dist)
 
-        ray_start_j_pu = (idx - 1) * width_ray_pu + 1
-        ray_stop_j_pu = idx * width_ray_pu
+        ray_start_j_pu = (num_rays - idx) * width_ray_pu + 1
+        ray_stop_j_pu = (num_rays - idx + 1) * width_ray_pu
 
         if height_line_pu >= height_av_pu - 1
             av[:, ray_start_j_pu:ray_stop_j_pu] .= gray
