@@ -21,6 +21,21 @@ function generate_tile_map(height = 8, width = 8)
     return tile_map
 end
 
+function generate_tile_map(tm_layout::Matrix{String})
+    height = size(tm_layout, 1)
+    width = size(tm_layout, 2)
+    objects = (GW.WALL,)
+    tile_map = GW.GridWorldBase(objects, height, width)
+
+    for pos in keys(tm_layout)
+        if tm_layout[pos] == "1"
+            tile_map[GW.WALL, pos] = true
+        end
+    end
+
+    return tile_map
+end
+
 rotate(x, y, c, s) = SA.SVector(c * x - s * y, s * x + c * y)
 rotate(vec, dir) = rotate(vec[1], vec[2], dir[1], dir[2])
 rotate_plus_90(vec) = typeof(vec)(-vec[2], vec[1])
