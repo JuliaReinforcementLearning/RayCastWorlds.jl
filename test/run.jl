@@ -5,6 +5,12 @@ import StaticArrays as SA
 
 const T = Float32
 
+# units
+
+const tu_per_wu = 1
+const pu_per_tu = 32
+const pu_per_wu = pu_per_tu * tu_per_wu
+
 # tile map
 
 const height_tm_tu = 8
@@ -54,26 +60,26 @@ end
 
 # world
 
-const height_world_wu = convert(T, 8)
-const width_world_wu = convert(T, 16)
+const height_world_wu = convert(T, height_tm_tu / tu_per_wu)
+const width_world_wu = convert(T, width_tm_tu / tu_per_wu)
 
 const world = RC.World(tm, height_world_wu, width_world_wu, agent)
 
 # img
 
-const height_tv_pu = 256
-const width_tv_pu = 512
+const height_tv_pu = pu_per_tu * height_tm_tu
+const width_tv_pu = pu_per_tu * width_tm_tu
 
 const height_av_pu = height_tv_pu
 const width_av_pu = width_ray_pu * num_rays
 
-const height_fb_pu = height_tv_pu
-const width_fb_pu = width_tv_pu + width_av_pu
+const height_img_pu = height_tv_pu
+const width_img_pu = width_tv_pu + width_av_pu
 
-const img = zeros(UInt32, height_fb_pu, width_fb_pu)
+const img = zeros(UInt32, height_img_pu, width_img_pu)
 const tv = view(img, :, 1:width_tv_pu)
-const av = view(img, :, width_tv_pu + 1 : width_fb_pu)
-const fb = zeros(UInt32, width_fb_pu, height_fb_pu)
+const av = view(img, :, width_tv_pu + 1 : width_img_pu)
+const fb = zeros(UInt32, width_img_pu, height_img_pu)
 
 # colors
 
@@ -85,11 +91,15 @@ const red = MFB.mfb_rgb(255, 0, 0)
 const green = MFB.mfb_rgb(0, 255, 0)
 const blue = MFB.mfb_rgb(0, 0, 255)
 
-# units
+# conversion
 
-const pu_per_wu = height_tv_pu / height_world_wu
-const tu_per_wu = height_tm_tu / height_world_wu
-const pu_per_tu = height_tv_pu ÷ height_tm_tu
+wu_to_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu) + 1
+wu_to_pu((x_wu, y_wu)) = (wu_to_pu(height_world_wu - y_wu), wu_to_pu(x_wu))
+wu_to_tu(x_wu::AbstractFloat) = floor(Int, x_wu * tu_per_wu) + 1
+wu_to_tu((x_wu, y_wu)) = (wu_to_tu(height_world_wu - y_wu), wu_to_tu(x_wu))
+pu_to_tu(i_pu::Integer) = (i_pu - 1) ÷ pu_per_tu + 1
+
+# units
 
 wu_to_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu) + 1
 wu_to_pu((x_wu, y_wu)) = (wu_to_pu(height_world_wu - y_wu), wu_to_pu(x_wu))
@@ -342,7 +352,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
 end
 
 function render()
-    window = MFB.mfb_open("Test", width_fb_pu, height_fb_pu)
+    window = MFB.mfb_open("Test", width_img_pu, height_img_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     draw_tile_map()
