@@ -99,14 +99,6 @@ wu_to_tu(x_wu::AbstractFloat) = floor(Int, x_wu * tu_per_wu) + 1
 wu_to_tu((x_wu, y_wu)) = (wu_to_tu(height_world_wu - y_wu), wu_to_tu(x_wu))
 pu_to_tu(i_pu::Integer) = (i_pu - 1) ÷ pu_per_tu + 1
 
-# units
-
-wu_to_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu) + 1
-wu_to_pu((x_wu, y_wu)) = (wu_to_pu(height_world_wu - y_wu), wu_to_pu(x_wu))
-wu_to_tu(x_wu::AbstractFloat) = floor(Int, x_wu * tu_per_wu) + 1
-wu_to_tu((x_wu, y_wu)) = (wu_to_tu(height_world_wu - y_wu), wu_to_tu(x_wu))
-pu_to_tu(i_pu::Integer) = (i_pu - 1) ÷ pu_per_tu + 1
-
 # tile map region
 
 get_tile_map_region_tu() = CartesianIndices((1:height_tm_tu, 1:width_tm_tu))
