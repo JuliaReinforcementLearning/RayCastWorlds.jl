@@ -7,7 +7,8 @@ const T = Float32
 
 # units
 
-const tu_per_wu = 1
+const tu_per_wu = convert(T, 1)
+const wu_per_tu = 1 / tu_per_wu
 const pu_per_tu = 32
 const pu_per_wu = pu_per_tu * tu_per_wu
 
@@ -46,6 +47,8 @@ const agent = RC.Agent(agent_position,
                        camera_plane,
                       )
 
+const circle = RC.StdCircle(radius_wu)
+
 # rays
 
 const num_rays = 32
@@ -64,6 +67,9 @@ const height_world_wu = convert(T, height_tm_tu / tu_per_wu)
 const width_world_wu = convert(T, width_tm_tu / tu_per_wu)
 
 const world = RC.World(tm, height_world_wu, width_world_wu, agent)
+
+const tile_half_side_wu = wu_per_tu / 2
+const square = RC.StdSquare(tile_half_side_wu)
 
 # img
 
@@ -105,6 +111,8 @@ get_tile_map_region_tu() = CartesianIndices((1:height_tm_tu, 1:width_tm_tu))
 
 # tile region
 
+get_tile_bottom_left_wu((i_tu, j_tu)) = ((j_tu - 1) * wu_per_tu, (height_tm_tu - i_tu) * wu_per_tu)
+get_tile_center_wu(tile_tu) = get_tile_bottom_left_wu(tile_tu) .+ tile_half_side_wu
 get_tile_top_left_pu(tile_tu) = (tile_tu .- 1) .* pu_per_tu .+ 1
 get_tile_bottom_right_pu(tile_tu) = tile_tu .* pu_per_tu
 function get_tile_region_pu(tile_tu)
@@ -126,6 +134,15 @@ function get_agent_region_pu(center_pu)
     return CartesianIndices((start_i:stop_i, start_j:stop_j))
 end
 get_agent_region_pu() = get_agent_region_pu(get_agent_center_pu())
+
+get_agent_bottom_left_tu(center_wu) = wu_to_tu(center_wu .- radius_wu)
+get_agent_top_right_tu(center_wu) = wu_to_tu(center_wu .+ radius_wu)
+
+function get_agent_region_tu(center_wu)
+    start_i, stop_j = get_agent_top_right_tu(center_wu)
+    stop_i, start_j = get_agent_bottom_left_tu(center_wu)
+    return CartesianIndices((start_i:stop_i, start_j:stop_j))
+end
 
 # main
 
@@ -208,10 +225,7 @@ function clear_agent()
     return nothing
 end
 
-function is_agent_colliding(center_wu)
-    x_wu, y_wu = center_wu
-    return tm[GW.WALL, wu_to_tu((x_wu + radius_wu, y_wu))...] || tm[GW.WALL, wu_to_tu((x_wu, y_wu + radius_wu))...] || tm[GW.WALL, wu_to_tu((x_wu - radius_wu, y_wu))...] || tm[GW.WALL, wu_to_tu((x_wu, y_wu - radius_wu))...]
-end
+is_agent_colliding(center_wu) = any(pos -> tm[GW.WALL, pos] && RC.is_colliding(square, circle, center_wu .- get_tile_center_wu(pos.I)), get_agent_region_tu(center_wu))
 
 map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
 
