@@ -79,15 +79,15 @@ const width_tv_pu = pu_per_tu * width_tm_tu
 const height_av_pu = height_tv_pu
 const width_av_pu = width_ray_pu * num_rays
 
-const height_img_pu = height_tv_pu
-const width_img_pu = width_tv_pu + width_av_pu
+const height_cv_pu = height_tv_pu
+const width_cv_pu = width_tv_pu + width_av_pu
 
 const tv = zeros(UInt32, height_tv_pu, width_tv_pu)
 const av = zeros(UInt32, height_av_pu, width_av_pu)
 
-const fb = zeros(UInt32, width_img_pu, height_img_pu)
-const fb_tv = view(fb, 1:width_tv_pu, :)
-const fb_av = view(fb, width_tv_pu + 1 : width_img_pu, :)
+const fb_cv = zeros(UInt32, width_cv_pu, height_cv_pu)
+const fb_tv = view(fb_cv, 1:width_tv_pu, :)
+const fb_av = view(fb_cv, width_tv_pu + 1 : width_cv_pu, :)
 
 # colors
 
@@ -360,7 +360,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
 end
 
 function render()
-    window = MFB.mfb_open("Test", width_img_pu, height_img_pu)
+    window = MFB.mfb_open("Test", width_cv_pu, height_cv_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     draw_tile_map()
@@ -372,7 +372,7 @@ function render()
     while MFB.mfb_wait_sync(window)
         permutedims!(fb_tv, tv, (2, 1))
         permutedims!(fb_av, av, (2, 1))
-        state = MFB.mfb_update(window, fb)
+        state = MFB.mfb_update(window, fb_cv)
 
         if state != MFB.STATE_OK
             break;
