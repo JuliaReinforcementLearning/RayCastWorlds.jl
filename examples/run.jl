@@ -82,10 +82,12 @@ const width_av_pu = width_ray_pu * num_rays
 const height_img_pu = height_tv_pu
 const width_img_pu = width_tv_pu + width_av_pu
 
-const img = zeros(UInt32, height_img_pu, width_img_pu)
-const tv = view(img, :, 1:width_tv_pu)
-const av = view(img, :, width_tv_pu + 1 : width_img_pu)
+const tv = zeros(UInt32, height_tv_pu, width_tv_pu)
+const av = zeros(UInt32, height_av_pu, width_av_pu)
+
 const fb = zeros(UInt32, width_img_pu, height_img_pu)
+const fb_tv = view(fb, 1:width_tv_pu, :)
+const fb_av = view(fb, width_tv_pu + 1 : width_img_pu, :)
 
 # colors
 
@@ -368,7 +370,9 @@ function render()
     draw_rays()
 
     while MFB.mfb_wait_sync(window)
-        state = MFB.mfb_update(window, permutedims!(fb, img, (2, 1)))
+        permutedims!(fb_tv, tv, (2, 1))
+        permutedims!(fb_av, av, (2, 1))
+        state = MFB.mfb_update(window, fb)
 
         if state != MFB.STATE_OK
             break;
