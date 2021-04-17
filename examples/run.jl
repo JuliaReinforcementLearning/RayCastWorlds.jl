@@ -361,7 +361,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
     return nothing
 end
 
-function render()
+function render_cv()
     window = MFB.mfb_open("Test", width_cv_pu, height_cv_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
@@ -387,4 +387,54 @@ function render()
     return nothing
 end
 
-render()
+function render_tv()
+    window = MFB.mfb_open("Top View", width_tv_pu, height_tv_pu)
+    MFB.mfb_set_keyboard_callback(window, keyboard_callback)
+
+    draw_tile_map()
+    draw_tile_map_boundaries()
+    draw_agent()
+    draw_agent_direction()
+    draw_rays()
+
+    while MFB.mfb_wait_sync(window)
+        permutedims!(fb_tv, tv, (2, 1))
+
+        state = MFB.mfb_update(window, fb_tv)
+
+        if state != MFB.STATE_OK
+            break;
+        end
+    end
+
+    MFB.mfb_close(window)
+
+    return nothing
+end
+
+function render_av()
+    window = MFB.mfb_open("Agent View", width_av_pu, height_av_pu)
+    MFB.mfb_set_keyboard_callback(window, keyboard_callback)
+
+    draw_tile_map()
+    draw_tile_map_boundaries()
+    draw_agent()
+    draw_agent_direction()
+    draw_rays()
+
+    while MFB.mfb_wait_sync(window)
+        permutedims!(fb_av, av, (2, 1))
+
+        state = MFB.mfb_update(window, fb_av)
+
+        if state != MFB.STATE_OK
+            break;
+        end
+    end
+
+    MFB.mfb_close(window)
+
+    return nothing
+end
+
+render_cv()
