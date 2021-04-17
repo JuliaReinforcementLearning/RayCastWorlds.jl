@@ -53,7 +53,6 @@ const circle = RC.StdCircle(radius_wu)
 
 const num_rays = 32
 const semi_fov = convert(T, pi / 6)
-const width_ray_pu = 8
 
 function get_rays()
     agent_direction = agent.direction
@@ -76,8 +75,8 @@ const square = RC.StdSquare(tile_half_side_wu)
 const height_tv_pu = pu_per_tu * height_tm_tu
 const width_tv_pu = pu_per_tu * width_tm_tu
 
-const height_av_pu = height_tv_pu
-const width_av_pu = width_ray_pu * num_rays
+const height_av_pu = num_rays
+const width_av_pu = num_rays
 
 const height_cv_pu = max(height_tv_pu, height_av_pu)
 const width_cv_pu = width_tv_pu + width_av_pu
@@ -239,7 +238,7 @@ function draw_rays()
     agent_direction = agent.direction
     ray_dirs = get_rays()
 
-    for (idx, ray_dir) in enumerate(ray_dirs)
+    for (ray_idx, ray_dir) in enumerate(ray_dirs)
         dist, side, hit_pos_tu = cast_ray(ray_dir)
         ray_stop_wu = agent_position + dist * ray_dir
         ray_stop_pu = wu_to_pu(ray_stop_wu)
@@ -248,8 +247,7 @@ function draw_rays()
         per_dist = dist * sum(agent_direction .* ray_dir)
         height_line_pu = floor(Int, height_av_pu / per_dist)
 
-        ray_start_j_pu = (num_rays - idx) * width_ray_pu + 1
-        ray_stop_j_pu = (num_rays - idx + 1) * width_ray_pu
+        idx = num_rays - ray_idx + 1
 
         if side == 1
             wall_color = dark_gray
@@ -258,12 +256,12 @@ function draw_rays()
         end
 
         if height_line_pu >= height_av_pu - 1
-            av[:, ray_start_j_pu:ray_stop_j_pu] .= wall_color
+            av[:, idx] .= wall_color
         else
             padding_pu = (height_av_pu - height_line_pu) ÷ 2
-            av[1:padding_pu, ray_start_j_pu:ray_stop_j_pu] .= white
-            av[padding_pu + 1 : end - padding_pu, ray_start_j_pu:ray_stop_j_pu] .= wall_color
-            av[end - padding_pu + 1 : end, ray_start_j_pu:ray_stop_j_pu] .= black
+            av[1:padding_pu, idx] .= white
+            av[padding_pu + 1 : end - padding_pu, idx] .= wall_color
+            av[end - padding_pu + 1 : end, idx] .= black
         end
     end
 
