@@ -5,6 +5,13 @@ import StaticArrays as SA
 
 const T = Float32
 
+# units
+
+const tu_per_wu = convert(T, 1)
+const wu_per_tu = 1 / tu_per_wu
+const pu_per_tu = 32
+const pu_per_wu = pu_per_tu * tu_per_wu
+
 # tile map
 
 const height_tm_tu = 8
@@ -40,6 +47,8 @@ const agent = RC.Agent(agent_position,
                        camera_plane,
                       )
 
+const circle = RC.StdCircle(radius_wu)
+
 # rays
 
 const num_rays = 32
@@ -54,26 +63,29 @@ end
 
 # world
 
-const height_world_wu = convert(T, 8)
-const width_world_wu = convert(T, 16)
+const height_world_wu = convert(T, height_tm_tu / tu_per_wu)
+const width_world_wu = convert(T, width_tm_tu / tu_per_wu)
 
 const world = RC.World(tm, height_world_wu, width_world_wu, agent)
 
+const tile_half_side_wu = wu_per_tu / 2
+const square = RC.StdSquare(tile_half_side_wu)
+
 # img
 
-const height_tv_pu = 256
-const width_tv_pu = 512
+const height_tv_pu = pu_per_tu * height_tm_tu
+const width_tv_pu = pu_per_tu * width_tm_tu
 
 const height_av_pu = height_tv_pu
 const width_av_pu = width_ray_pu * num_rays
 
-const height_fb_pu = height_tv_pu
-const width_fb_pu = width_tv_pu + width_av_pu
+const height_img_pu = height_tv_pu
+const width_img_pu = width_tv_pu + width_av_pu
 
-const img = zeros(UInt32, height_fb_pu, width_fb_pu)
+const img = zeros(UInt32, height_img_pu, width_img_pu)
 const tv = view(img, :, 1:width_tv_pu)
-const av = view(img, :, width_tv_pu + 1 : width_fb_pu)
-const fb = zeros(UInt32, width_fb_pu, height_fb_pu)
+const av = view(img, :, width_tv_pu + 1 : width_img_pu)
+const fb = zeros(UInt32, width_img_pu, height_img_pu)
 
 # colors
 
@@ -85,11 +97,7 @@ const red = MFB.mfb_rgb(255, 0, 0)
 const green = MFB.mfb_rgb(0, 255, 0)
 const blue = MFB.mfb_rgb(0, 0, 255)
 
-# units
-
-const pu_per_wu = height_tv_pu / height_world_wu
-const tu_per_wu = height_tm_tu / height_world_wu
-const pu_per_tu = height_tv_pu ÷ height_tm_tu
+# conversion
 
 wu_to_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu) + 1
 wu_to_pu((x_wu, y_wu)) = (wu_to_pu(height_world_wu - y_wu), wu_to_pu(x_wu))
@@ -103,6 +111,8 @@ get_tile_map_region_tu() = CartesianIndices((1:height_tm_tu, 1:width_tm_tu))
 
 # tile region
 
+get_tile_bottom_left_wu((i_tu, j_tu)) = ((j_tu - 1) * wu_per_tu, (height_tm_tu - i_tu) * wu_per_tu)
+get_tile_center_wu(tile_tu) = get_tile_bottom_left_wu(tile_tu) .+ tile_half_side_wu
 get_tile_top_left_pu(tile_tu) = (tile_tu .- 1) .* pu_per_tu .+ 1
 get_tile_bottom_right_pu(tile_tu) = tile_tu .* pu_per_tu
 function get_tile_region_pu(tile_tu)
@@ -124,6 +134,15 @@ function get_agent_region_pu(center_pu)
     return CartesianIndices((start_i:stop_i, start_j:stop_j))
 end
 get_agent_region_pu() = get_agent_region_pu(get_agent_center_pu())
+
+get_agent_bottom_left_tu(center_wu) = wu_to_tu(center_wu .- radius_wu)
+get_agent_top_right_tu(center_wu) = wu_to_tu(center_wu .+ radius_wu)
+
+function get_agent_region_tu(center_wu)
+    start_i, stop_j = get_agent_top_right_tu(center_wu)
+    stop_i, start_j = get_agent_bottom_left_tu(center_wu)
+    return CartesianIndices((start_i:stop_i, start_j:stop_j))
+end
 
 # main
 
@@ -206,10 +225,7 @@ function clear_agent()
     return nothing
 end
 
-function is_agent_colliding(center_wu)
-    x_wu, y_wu = center_wu
-    return tm[GW.WALL, wu_to_tu((x_wu + radius_wu, y_wu))...] || tm[GW.WALL, wu_to_tu((x_wu, y_wu + radius_wu))...] || tm[GW.WALL, wu_to_tu((x_wu - radius_wu, y_wu))...] || tm[GW.WALL, wu_to_tu((x_wu, y_wu - radius_wu))...]
-end
+is_agent_colliding(center_wu) = any(pos -> tm[GW.WALL, pos] && RC.is_colliding(square, circle, center_wu .- get_tile_center_wu(pos.I)), get_agent_region_tu(center_wu))
 
 map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
 
@@ -342,7 +358,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
 end
 
 function render()
-    window = MFB.mfb_open("Test", width_fb_pu, height_fb_pu)
+    window = MFB.mfb_open("Test", width_img_pu, height_img_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     draw_tile_map()
