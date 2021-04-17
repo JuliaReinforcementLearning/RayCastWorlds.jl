@@ -79,15 +79,17 @@ const width_tv_pu = pu_per_tu * width_tm_tu
 const height_av_pu = height_tv_pu
 const width_av_pu = width_ray_pu * num_rays
 
-const height_cv_pu = height_tv_pu
+const height_cv_pu = max(height_tv_pu, height_av_pu)
 const width_cv_pu = width_tv_pu + width_av_pu
 
 const tv = zeros(UInt32, height_tv_pu, width_tv_pu)
 const av = zeros(UInt32, height_av_pu, width_av_pu)
 
+const fb_tv = zeros(UInt32, width_tv_pu, height_tv_pu)
+const fb_av = zeros(UInt32, width_av_pu, height_av_pu)
 const fb_cv = zeros(UInt32, width_cv_pu, height_cv_pu)
-const fb_tv = view(fb_cv, 1:width_tv_pu, :)
-const fb_av = view(fb_cv, width_tv_pu + 1 : width_cv_pu, :)
+const fb_cv_tv = view(fb_cv, 1:width_tv_pu, 1:height_tv_pu)
+const fb_cv_av = view(fb_cv, width_tv_pu + 1 : width_cv_pu, 1:height_av_pu)
 
 # colors
 
@@ -370,8 +372,9 @@ function render()
     draw_rays()
 
     while MFB.mfb_wait_sync(window)
-        permutedims!(fb_tv, tv, (2, 1))
-        permutedims!(fb_av, av, (2, 1))
+        permutedims!(fb_cv_tv, tv, (2, 1))
+        permutedims!(fb_cv_av, av, (2, 1))
+
         state = MFB.mfb_update(window, fb_cv)
 
         if state != MFB.STATE_OK
