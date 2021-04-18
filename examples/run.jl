@@ -55,12 +55,6 @@ const circle = RC.StdCircle(radius_wu)
 const num_rays = 256
 const semi_fov = convert(T, pi / 6)
 
-function get_rays()
-    agent_direction = agent.direction
-    agent_angle = atan(agent_direction[2], agent_direction[1])
-    return map(theta -> SA.SVector(cos(theta), sin(theta)), range(agent_angle - semi_fov, agent_angle + semi_fov, length = num_rays))
-end
-
 # world
 
 const height_world_wu = convert(T, height_tm_tu / tu_per_wu)
@@ -237,7 +231,7 @@ function draw_rays_tv()
     ray_start_pu = get_agent_center_pu()
     agent_position = agent.position
     agent_direction = agent.direction
-    ray_dirs = get_rays()
+    ray_dirs = RC.get_rays(agent_direction, semi_fov, num_rays)
 
     for (ray_idx, ray_dir) in enumerate(ray_dirs)
         dist, side, hit_pos_tu = cast_ray(ray_dir)
@@ -253,7 +247,7 @@ end
 function draw_rays_av()
     agent_position = agent.position
     agent_direction = agent.direction
-    ray_dirs = get_rays()
+    ray_dirs = RC.get_rays(agent_direction, semi_fov, num_rays)
 
     for (ray_idx, ray_dir) in enumerate(ray_dirs)
         dist, side, hit_pos_tu = cast_ray(ray_dir)

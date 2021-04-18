@@ -27,3 +27,8 @@ function is_colliding(square::StdSquare, circle::StdCircle, pos::SA.SVector)
     radius = get_radius(circle)
     return sum(vec .^ 2) < radius * radius
 end
+
+function get_rays(dir::SA.SVector, semi_fov, num_rays)
+    angle = atan(dir[2], dir[1])
+    return map(theta -> SA.SVector(cos(theta), sin(theta)), range(angle - semi_fov, angle + semi_fov, length = num_rays))
+end
