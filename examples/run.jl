@@ -149,15 +149,12 @@ end
 
 # main
 
-function clear_screen()
-    tv[:, :] .= black
-    return nothing
-end
-
 function draw_tile_map()
     map(get_tile_map_region_tu()) do pos
         if tm[GW.WALL, pos]
             tv[get_tile_region_pu(pos.I)] .= white
+        else
+            tv[get_tile_region_pu(pos.I)] .= black
         end
         return nothing
     end
@@ -337,8 +334,6 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
     if isPressed
         display(key)
         println()
-
-        clear_screen()
 
         if key == MFB.KB_KEY_UP
             new_position = agent.position + position_increment * agent.direction
