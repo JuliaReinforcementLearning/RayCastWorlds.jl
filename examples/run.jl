@@ -51,9 +51,8 @@ const circle = RC.StdCircle(radius_wu)
 
 # rays
 
-const num_rays = 32
+const num_rays = 256
 const semi_fov = convert(T, pi / 6)
-const width_ray_pu = 8
 
 function get_rays()
     agent_direction = agent.direction
@@ -76,16 +75,20 @@ const square = RC.StdSquare(tile_half_side_wu)
 const height_tv_pu = pu_per_tu * height_tm_tu
 const width_tv_pu = pu_per_tu * width_tm_tu
 
-const height_av_pu = height_tv_pu
-const width_av_pu = width_ray_pu * num_rays
+const height_av_pu = num_rays
+const width_av_pu = num_rays
 
-const height_img_pu = height_tv_pu
-const width_img_pu = width_tv_pu + width_av_pu
+const height_cv_pu = max(height_tv_pu, height_av_pu)
+const width_cv_pu = width_tv_pu + width_av_pu
 
-const img = zeros(UInt32, height_img_pu, width_img_pu)
-const tv = view(img, :, 1:width_tv_pu)
-const av = view(img, :, width_tv_pu + 1 : width_img_pu)
-const fb = zeros(UInt32, width_img_pu, height_img_pu)
+const tv = zeros(UInt32, height_tv_pu, width_tv_pu)
+const av = zeros(UInt32, height_av_pu, width_av_pu)
+
+const fb_tv = zeros(UInt32, width_tv_pu, height_tv_pu)
+const fb_av = zeros(UInt32, width_av_pu, height_av_pu)
+const fb_cv = zeros(UInt32, width_cv_pu, height_cv_pu)
+const fb_cv_tv = view(fb_cv, 1:width_tv_pu, 1:height_tv_pu)
+const fb_cv_av = view(fb_cv, width_tv_pu + 1 : width_cv_pu, 1:height_av_pu)
 
 # colors
 
@@ -146,15 +149,12 @@ end
 
 # main
 
-function clear_screen()
-    tv[:, :] .= black
-    return nothing
-end
-
 function draw_tile_map()
     map(get_tile_map_region_tu()) do pos
         if tm[GW.WALL, pos]
             tv[get_tile_region_pu(pos.I)] .= white
+        else
+            tv[get_tile_region_pu(pos.I)] .= black
         end
         return nothing
     end
@@ -229,23 +229,35 @@ is_agent_colliding(center_wu) = any(pos -> tm[GW.WALL, pos] && RC.is_colliding(s
 
 map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
 
-function draw_rays()
+function draw_rays_tv()
     ray_start_pu = get_agent_center_pu()
     agent_position = agent.position
     agent_direction = agent.direction
     ray_dirs = get_rays()
 
-    for (idx, ray_dir) in enumerate(ray_dirs)
+    for (ray_idx, ray_dir) in enumerate(ray_dirs)
         dist, side, hit_pos_tu = cast_ray(ray_dir)
         ray_stop_wu = agent_position + dist * ray_dir
         ray_stop_pu = wu_to_pu(ray_stop_wu)
         draw_line(ray_start_pu..., ray_stop_pu...)
 
+    end
+
+    return nothing
+end
+
+function draw_rays_av()
+    agent_position = agent.position
+    agent_direction = agent.direction
+    ray_dirs = get_rays()
+
+    for (ray_idx, ray_dir) in enumerate(ray_dirs)
+        dist, side, hit_pos_tu = cast_ray(ray_dir)
+
         per_dist = dist * sum(agent_direction .* ray_dir)
         height_line_pu = floor(Int, height_av_pu / per_dist)
 
-        ray_start_j_pu = (num_rays - idx) * width_ray_pu + 1
-        ray_stop_j_pu = (num_rays - idx + 1) * width_ray_pu
+        idx = num_rays - ray_idx + 1
 
         if side == 1
             wall_color = dark_gray
@@ -254,12 +266,12 @@ function draw_rays()
         end
 
         if height_line_pu >= height_av_pu - 1
-            av[:, ray_start_j_pu:ray_stop_j_pu] .= wall_color
+            av[:, idx] .= wall_color
         else
             padding_pu = (height_av_pu - height_line_pu) ÷ 2
-            av[1:padding_pu, ray_start_j_pu:ray_stop_j_pu] .= white
-            av[padding_pu + 1 : end - padding_pu, ray_start_j_pu:ray_stop_j_pu] .= wall_color
-            av[end - padding_pu + 1 : end, ray_start_j_pu:ray_stop_j_pu] .= black
+            av[1:padding_pu, idx] .= white
+            av[padding_pu + 1 : end - padding_pu, idx] .= wall_color
+            av[end - padding_pu + 1 : end, idx] .= black
         end
     end
 
@@ -323,8 +335,6 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
         display(key)
         println()
 
-        clear_screen()
-
         if key == MFB.KB_KEY_UP
             new_position = agent.position + position_increment * agent.direction
             if !is_agent_colliding(new_position)
@@ -351,24 +361,29 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
         draw_tile_map_boundaries()
         draw_agent()
         draw_agent_direction()
-        draw_rays()
+        draw_rays_tv()
+        draw_rays_av()
     end
 
     return nothing
 end
 
-function render()
-    window = MFB.mfb_open("Test", width_img_pu, height_img_pu)
+function render_cv()
+    window = MFB.mfb_open("Combined View", width_cv_pu, height_cv_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     draw_tile_map()
     draw_tile_map_boundaries()
     draw_agent()
     draw_agent_direction()
-    draw_rays()
+    draw_rays_tv()
+    draw_rays_av()
 
     while MFB.mfb_wait_sync(window)
-        state = MFB.mfb_update(window, permutedims!(fb, img, (2, 1)))
+        permutedims!(fb_cv_tv, tv, (2, 1))
+        permutedims!(fb_cv_av, av, (2, 1))
+
+        state = MFB.mfb_update(window, fb_cv)
 
         if state != MFB.STATE_OK
             break;
@@ -380,4 +395,56 @@ function render()
     return nothing
 end
 
-render()
+function render_tv()
+    window = MFB.mfb_open("Top View", width_tv_pu, height_tv_pu)
+    MFB.mfb_set_keyboard_callback(window, keyboard_callback)
+
+    draw_tile_map()
+    draw_tile_map_boundaries()
+    draw_agent()
+    draw_agent_direction()
+    draw_rays_tv()
+    draw_rays_av()
+
+    while MFB.mfb_wait_sync(window)
+        permutedims!(fb_tv, tv, (2, 1))
+
+        state = MFB.mfb_update(window, fb_tv)
+
+        if state != MFB.STATE_OK
+            break;
+        end
+    end
+
+    MFB.mfb_close(window)
+
+    return nothing
+end
+
+function render_av()
+    window = MFB.mfb_open("Agent View", width_av_pu, height_av_pu)
+    MFB.mfb_set_keyboard_callback(window, keyboard_callback)
+
+    draw_tile_map()
+    draw_tile_map_boundaries()
+    draw_agent()
+    draw_agent_direction()
+    draw_rays_tv()
+    draw_rays_av()
+
+    while MFB.mfb_wait_sync(window)
+        permutedims!(fb_av, av, (2, 1))
+
+        state = MFB.mfb_update(window, fb_av)
+
+        if state != MFB.STATE_OK
+            break;
+        end
+    end
+
+    MFB.mfb_close(window)
+
+    return nothing
+end
+
+render_cv()
