@@ -2,6 +2,7 @@ import GridWorlds as GW
 import MiniFB as MFB
 import RayCaster as RC
 import StaticArrays as SA
+import ReinforcementLearningBase as RLBase
 
 const T = Float32
 
@@ -20,7 +21,7 @@ const width_tm_tu = 16
 tm_layout = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
              1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
              1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
-             1 0 0 1 0 0 0 0 1 0 0 0 0 0 0 1
+             1 0 0 1 0 0 0 0 1 0 0 0 0 0 2 1
              1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1
              1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
              1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
@@ -99,6 +100,7 @@ const dark_gray = MFB.mfb_rgb(95, 95, 95)
 const red = MFB.mfb_rgb(255, 0, 0)
 const green = MFB.mfb_rgb(0, 255, 0)
 const blue = MFB.mfb_rgb(0, 0, 255)
+const dark_blue = MFB.mfb_rgb(0, 0, 127)
 
 # conversion
 
@@ -153,6 +155,8 @@ function draw_tile_map()
     map(get_tile_map_region_tu()) do pos
         if tm[GW.WALL, pos]
             tv[get_tile_region_pu(pos.I)] .= white
+        elseif tm[GW.GOAL, pos]
+            tv[get_tile_region_pu(pos.I)] .= blue
         else
             tv[get_tile_region_pu(pos.I)] .= black
         end
@@ -225,7 +229,7 @@ function clear_agent()
     return nothing
 end
 
-is_agent_colliding(center_wu) = any(pos -> tm[GW.WALL, pos] && RC.is_colliding(square, circle, center_wu .- get_tile_center_wu(pos.I)), get_agent_region_tu(center_wu))
+is_agent_colliding(center_wu) = any(pos -> (tm[GW.WALL, pos] || tm[GW.GOAL, pos]) && RC.is_colliding(square, circle, center_wu .- get_tile_center_wu(pos.I)), get_agent_region_tu(center_wu))
 
 map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
 
@@ -259,18 +263,22 @@ function draw_rays_av()
 
         idx = num_rays - ray_idx + 1
 
-        if side == 1
-            wall_color = dark_gray
-        else
-            wall_color = gray
+        if tm[GW.WALL, hit_pos_tu...] && side == 1
+            color = dark_gray
+        elseif tm[GW.WALL, hit_pos_tu...] && side == 0
+            color = gray
+        elseif tm[GW.GOAL, hit_pos_tu...] && side == 1
+            color = dark_blue
+        elseif tm[GW.GOAL, hit_pos_tu...] && side == 0
+            color = blue
         end
 
         if height_line_pu >= height_av_pu - 1
-            av[:, idx] .= wall_color
+            av[:, idx] .= color
         else
             padding_pu = (height_av_pu - height_line_pu) ÷ 2
             av[1:padding_pu, idx] .= white
-            av[padding_pu + 1 : end - padding_pu, idx] .= wall_color
+            av[padding_pu + 1 : end - padding_pu, idx] .= color
             av[end - padding_pu + 1 : end, idx] .= black
         end
     end
@@ -322,7 +330,7 @@ function cast_ray(ray_dir)
         end
 
         hit_pos_tu = map_to_tu((map_x, map_y))
-        if tm[GW.WALL, hit_pos_tu...]
+        if tm[GW.WALL, hit_pos_tu...] || tm[GW.GOAL, hit_pos_tu...]
             hit = 1
         end
     end
