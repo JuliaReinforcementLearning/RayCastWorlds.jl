@@ -51,7 +51,7 @@ const circle = RC.StdCircle(radius_wu)
 
 # rays
 
-const num_rays = 32
+const num_rays = 256
 const semi_fov = convert(T, pi / 6)
 
 function get_rays()
@@ -232,7 +232,7 @@ is_agent_colliding(center_wu) = any(pos -> tm[GW.WALL, pos] && RC.is_colliding(s
 
 map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
 
-function draw_rays()
+function draw_rays_tv()
     ray_start_pu = get_agent_center_pu()
     agent_position = agent.position
     agent_direction = agent.direction
@@ -243,6 +243,19 @@ function draw_rays()
         ray_stop_wu = agent_position + dist * ray_dir
         ray_stop_pu = wu_to_pu(ray_stop_wu)
         draw_line(ray_start_pu..., ray_stop_pu...)
+
+    end
+
+    return nothing
+end
+
+function draw_rays_av()
+    agent_position = agent.position
+    agent_direction = agent.direction
+    ray_dirs = get_rays()
+
+    for (ray_idx, ray_dir) in enumerate(ray_dirs)
+        dist, side, hit_pos_tu = cast_ray(ray_dir)
 
         per_dist = dist * sum(agent_direction .* ray_dir)
         height_line_pu = floor(Int, height_av_pu / per_dist)
@@ -353,21 +366,23 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
         draw_tile_map_boundaries()
         draw_agent()
         draw_agent_direction()
-        draw_rays()
+        draw_rays_tv()
+        draw_rays_av()
     end
 
     return nothing
 end
 
 function render_cv()
-    window = MFB.mfb_open("Test", width_cv_pu, height_cv_pu)
+    window = MFB.mfb_open("Combined View", width_cv_pu, height_cv_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     draw_tile_map()
     draw_tile_map_boundaries()
     draw_agent()
     draw_agent_direction()
-    draw_rays()
+    draw_rays_tv()
+    draw_rays_av()
 
     while MFB.mfb_wait_sync(window)
         permutedims!(fb_cv_tv, tv, (2, 1))
@@ -393,7 +408,8 @@ function render_tv()
     draw_tile_map_boundaries()
     draw_agent()
     draw_agent_direction()
-    draw_rays()
+    draw_rays_tv()
+    draw_rays_av()
 
     while MFB.mfb_wait_sync(window)
         permutedims!(fb_tv, tv, (2, 1))
@@ -418,7 +434,8 @@ function render_av()
     draw_tile_map_boundaries()
     draw_agent()
     draw_agent_direction()
-    draw_rays()
+    draw_rays_tv()
+    draw_rays_av()
 
     while MFB.mfb_wait_sync(window)
         permutedims!(fb_av, av, (2, 1))
