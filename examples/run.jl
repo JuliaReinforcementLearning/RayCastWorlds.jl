@@ -166,18 +166,7 @@ function draw_tile_map_boundaries()
     return nothing
 end
 
-function draw_agent()
-    center_pu = get_agent_center_pu()
-
-    map(get_agent_region_pu(center_pu)) do pos
-        if sum((pos.I .- center_pu) .^ 2) <= radius_pu ^ 2
-            tv[pos] = green
-        end
-        return nothing
-    end
-
-    return nothing
-end
+draw_agent() = RC.draw_circle!(tv, get_agent_center_pu()..., radius_pu, green)
 
 # Ref: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
 function draw_line(i0::Int, j0::Int, i1::Int, j1::Int)
