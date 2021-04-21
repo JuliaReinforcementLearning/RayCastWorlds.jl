@@ -112,13 +112,8 @@ get_tile_map_region_tu() = CartesianIndices((1:height_tm_tu, 1:width_tm_tu))
 
 get_tile_bottom_left_wu((i_tu, j_tu)) = ((j_tu - 1) * wu_per_tu, (height_tm_tu - i_tu) * wu_per_tu)
 get_tile_center_wu(tile_tu) = get_tile_bottom_left_wu(tile_tu) .+ tile_half_side_wu
-get_tile_top_left_pu(tile_tu) = (tile_tu .- 1) .* pu_per_tu .+ 1
-get_tile_bottom_right_pu(tile_tu) = tile_tu .* pu_per_tu
-function get_tile_region_pu(tile_tu)
-    start_i, start_j = get_tile_top_left_pu(tile_tu)
-    stop_i, stop_j = get_tile_bottom_right_pu(tile_tu)
-    return CartesianIndices((start_i:stop_i, start_j:stop_j))
-end
+get_tile_start_pu(i_tu) = (i_tu - 1) * pu_per_tu + 1
+get_tile_stop_pu(i_tu) = i_tu * pu_per_tu
 
 # agent region
 
@@ -146,15 +141,24 @@ end
 # main
 
 function draw_tile_map()
-    map(get_tile_map_region_tu()) do pos
-        if tm[GW.WALL, pos]
-            tv[get_tile_region_pu(pos.I)] .= white
-        elseif tm[GW.GOAL, pos]
-            tv[get_tile_region_pu(pos.I)] .= blue
-        else
-            tv[get_tile_region_pu(pos.I)] .= black
+    for j in 1:width_tm_tu
+        for i in 1:height_tm_tu
+
+            if tm[GW.WALL, i, j]
+                color = white
+            elseif tm[GW.GOAL, i, j]
+                color = blue
+            else
+                color = black
+            end
+
+            top_left_i = get_tile_start_pu(i)
+            top_left_j = get_tile_start_pu(j)
+            bottom_right_i = get_tile_stop_pu(i)
+            bottom_right_j = get_tile_stop_pu(j)
+
+            RC.draw_rectangle!(tv, top_left_i, top_left_j, bottom_right_i, bottom_right_j, color)
         end
-        return nothing
     end
 
     return nothing

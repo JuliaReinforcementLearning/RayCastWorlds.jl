@@ -1,3 +1,7 @@
+function draw_rectangle!(img::AbstractMatrix, top_left_i::Integer, top_left_j::Integer, bottom_right_i::Integer, bottom_right_j::Integer, value)
+    img[top_left_i:bottom_right_i, top_left_j:bottom_right_j] .= value
+end
+
 function draw_circle!(img::AbstractMatrix, center_i::Integer, center_j::Integer, radius::Integer, value)
     for j in center_j - radius : center_j + radius
         for i in center_i - radius : center_i + radius
