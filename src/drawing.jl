@@ -9,3 +9,34 @@ function draw_circle!(img::AbstractMatrix, center_i::Integer, center_j::Integer,
 
     return nothing
 end
+
+# Ref: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+function draw_line!(img::AbstractMatrix, i0::Int, j0::Int, i1::Int, j1::Int, value)
+    di = abs(i1 - i0)
+    dj = -abs(j1 - j0)
+    si = i0 < i1 ? 1 : -1
+    sj = j0 < j1 ? 1 : -1
+    err = di + dj
+
+    while true
+        img[i0, j0] = value
+
+        if (i0 == i1 && j0 == j1)
+            break
+        end
+
+        e2 = 2 * err
+
+        if (e2 >= dj)
+            err += dj
+            i0 += si
+        end
+
+        if (e2 <= di)
+            err += di
+            j0 += sj
+        end
+    end
+
+    return nothing
+end

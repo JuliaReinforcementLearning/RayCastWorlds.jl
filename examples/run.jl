@@ -168,42 +168,11 @@ end
 
 draw_agent() = RC.draw_circle!(tv, get_agent_center_pu()..., radius_pu, green)
 
-# Ref: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-function draw_line(i0::Int, j0::Int, i1::Int, j1::Int)
-    di = abs(i1-i0)
-    dj = -abs(j1-j0)
-    si = i0<i1 ? 1 : -1
-    sj = j0<j1 ? 1 : -1
-    err = di+dj
-
-    while true
-        tv[i0, j0] = red
-
-        if (i0 == i1 && j0 == j1)
-            break
-        end
-
-        e2 = 2*err
-
-        if (e2 >= dj)
-            err += dj
-            i0 += si
-        end
-
-        if (e2 <= di)
-            err += di
-            j0 += sj
-        end
-    end
-
-    return nothing
-end
-
 function draw_agent_direction()
     i0, j0 = get_agent_center_pu()
     i1 = wu_to_pu(height_world_wu - (agent.position[2] + radius_wu * agent.direction[2] / 2))
     j1 = wu_to_pu(agent.position[1] + radius_wu * agent.direction[1] * 3 / 4)
-    draw_line(i0, j0, i1, j1)
+    RC.draw_line!(tv, i0, j0, i1, j1, red)
     return nothing
 end
 
@@ -226,7 +195,7 @@ function draw_rays_tv()
         dist, side, hit_pos_tu = cast_ray(ray_dir)
         ray_stop_wu = agent_position + dist * ray_dir
         ray_stop_pu = wu_to_pu(ray_stop_wu)
-        draw_line(ray_start_pu..., ray_stop_pu...)
+        RC.draw_line!(tv, ray_start_pu..., ray_stop_pu..., red)
 
     end
 
