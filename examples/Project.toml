@@ -1,4 +1,5 @@
 [deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 GridWorlds = "e15a9946-cd7f-4d03-83e2-6c30bacb0043"
 MiniFB = "cc649173-1898-4bb8-8a16-ca5f88bd87d9"
 RayCaster = "a48166eb-4254-4927-9a4f-eb5d9658c5fa"
