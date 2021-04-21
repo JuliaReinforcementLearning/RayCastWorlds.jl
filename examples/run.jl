@@ -115,6 +115,18 @@ get_tile_center_wu(tile_tu) = get_tile_bottom_left_wu(tile_tu) .+ tile_half_side
 get_tile_start_pu(i_tu) = (i_tu - 1) * pu_per_tu + 1
 get_tile_stop_pu(i_tu) = i_tu * pu_per_tu
 
+function get_tile_color(tile_map, i::Integer, j::Integer)
+    if tile_map[GW.WALL, i, j]
+        color = white
+    elseif tile_map[GW.GOAL, i, j]
+        color = blue
+    else
+        color = black
+    end
+
+    return color
+end
+
 # agent region
 
 const radius_pu = wu_to_pu(radius_wu)
@@ -143,14 +155,7 @@ end
 function draw_tile_map()
     for j in 1:width_tm_tu
         for i in 1:height_tm_tu
-
-            if tm[GW.WALL, i, j]
-                color = white
-            elseif tm[GW.GOAL, i, j]
-                color = blue
-            else
-                color = black
-            end
+            color = get_tile_color(tm, i, j)
 
             top_left_i = get_tile_start_pu(i)
             top_left_j = get_tile_start_pu(j)
