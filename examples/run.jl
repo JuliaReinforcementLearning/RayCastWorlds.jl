@@ -115,18 +115,6 @@ get_tile_center_wu(tile_tu) = get_tile_bottom_left_wu(tile_tu) .+ tile_half_side
 get_tile_start_pu(i_tu) = (i_tu - 1) * pu_per_tu + 1
 get_tile_stop_pu(i_tu) = i_tu * pu_per_tu
 
-function get_tile_color(tile_map, i::Integer, j::Integer)
-    if tile_map[GW.WALL, i, j]
-        color = white
-    elseif tile_map[GW.GOAL, i, j]
-        color = blue
-    else
-        color = black
-    end
-
-    return color
-end
-
 # agent region
 
 const radius_pu = wu_to_pu(radius_wu)
@@ -151,23 +139,6 @@ function get_agent_region_tu(center_wu)
 end
 
 # main
-
-function draw_tile_map()
-    for j in 1:width_tm_tu
-        for i in 1:height_tm_tu
-            color = get_tile_color(tm, i, j)
-
-            top_left_i = get_tile_start_pu(i)
-            top_left_j = get_tile_start_pu(j)
-            bottom_right_i = get_tile_stop_pu(i)
-            bottom_right_j = get_tile_stop_pu(j)
-
-            RC.draw_rectangle!(tv, top_left_i, top_left_j, bottom_right_i, bottom_right_j, color)
-        end
-    end
-
-    return nothing
-end
 
 function draw_tile_map_boundaries()
     tv[1:pu_per_tu:height_tv_pu, :] .= gray
@@ -313,7 +284,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
             MFB.mfb_close(window)
         end
 
-        draw_tile_map()
+        RC.draw_tile_map!(tv, tm)
         draw_tile_map_boundaries()
         draw_agent()
         draw_rays_tv()
@@ -327,7 +298,7 @@ function render_cv()
     window = MFB.mfb_open("Combined View", width_cv_pu, height_cv_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
-    draw_tile_map()
+    RC.draw_tile_map!(tv, tm)
     draw_tile_map_boundaries()
     draw_agent()
     draw_rays_tv()
@@ -353,7 +324,7 @@ function render_tv()
     window = MFB.mfb_open("Top View", width_tv_pu, height_tv_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
-    draw_tile_map()
+    RC.draw_tile_map!(tv, tm)
     draw_tile_map_boundaries()
     draw_agent()
     draw_rays_tv()
@@ -378,7 +349,7 @@ function render_av()
     window = MFB.mfb_open("Agent View", width_av_pu, height_av_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
-    draw_tile_map()
+    RC.draw_tile_map!(tv, tm)
     draw_tile_map_boundaries()
     draw_agent()
     draw_rays_tv()
