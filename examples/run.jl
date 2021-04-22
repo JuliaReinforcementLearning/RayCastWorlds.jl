@@ -85,17 +85,6 @@ const fb_cv = zeros(UInt32, width_cv_pu, height_cv_pu)
 const fb_cv_tv = view(fb_cv, 1:width_tv_pu, 1:height_tv_pu)
 const fb_cv_av = view(fb_cv, width_tv_pu + 1 : width_cv_pu, 1:height_av_pu)
 
-# colors
-
-const black = MFB.mfb_rgb(0, 0, 0)
-const white = MFB.mfb_rgb(255, 255, 255)
-const gray = MFB.mfb_rgb(127, 127, 127)
-const dark_gray = MFB.mfb_rgb(95, 95, 95)
-const red = MFB.mfb_rgb(255, 0, 0)
-const green = MFB.mfb_rgb(0, 255, 0)
-const blue = MFB.mfb_rgb(0, 0, 255)
-const dark_blue = MFB.mfb_rgb(0, 0, 127)
-
 # conversion
 
 wu_to_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu) + 1
@@ -141,12 +130,12 @@ end
 # main
 
 function draw_tile_map_boundaries()
-    tv[1:pu_per_tu:height_tv_pu, :] .= gray
-    tv[:, 1:pu_per_tu:width_tv_pu] .= gray
+    tv[1:pu_per_tu:height_tv_pu, :] .= RC.gray
+    tv[:, 1:pu_per_tu:width_tv_pu] .= RC.gray
     return nothing
 end
 
-draw_agent() = RC.draw_circle!(tv, get_agent_center_pu()..., radius_pu, green)
+draw_agent() = RC.draw_circle!(tv, get_agent_center_pu()..., radius_pu, RC.green)
 
 is_agent_colliding(center_wu) = any(pos -> (tm[GW.WALL, pos] || tm[GW.GOAL, pos]) && RC.is_colliding(square, circle, center_wu .- get_tile_center_wu(pos.I)), get_agent_region_tu(center_wu))
 
@@ -162,7 +151,7 @@ function draw_rays_tv()
         dist, side, hit_pos_tu = cast_ray(ray_dir)
         ray_stop_wu = agent_position + dist * ray_dir
         ray_stop_pu = wu_to_pu(ray_stop_wu)
-        RC.draw_line!(tv, ray_start_pu..., ray_stop_pu..., red)
+        RC.draw_line!(tv, ray_start_pu..., ray_stop_pu..., RC.red)
 
     end
 
@@ -183,22 +172,22 @@ function draw_rays_av()
         idx = num_rays - ray_idx + 1
 
         if tm[GW.WALL, hit_pos_tu...] && side == 1
-            color = dark_gray
+            color = RC.dark_gray
         elseif tm[GW.WALL, hit_pos_tu...] && side == 0
-            color = gray
+            color = RC.gray
         elseif tm[GW.GOAL, hit_pos_tu...] && side == 1
-            color = dark_blue
+            color = RC.dark_blue
         elseif tm[GW.GOAL, hit_pos_tu...] && side == 0
-            color = blue
+            color = RC.blue
         end
 
         if height_line_pu >= height_av_pu - 1
             av[:, idx] .= color
         else
             padding_pu = (height_av_pu - height_line_pu) ÷ 2
-            av[1:padding_pu, idx] .= white
+            av[1:padding_pu, idx] .= RC.white
             av[padding_pu + 1 : end - padding_pu, idx] .= color
-            av[end - padding_pu + 1 : end, idx] .= black
+            av[end - padding_pu + 1 : end, idx] .= RC.black
         end
     end
 
