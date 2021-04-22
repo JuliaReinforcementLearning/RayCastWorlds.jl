@@ -6,24 +6,14 @@ import ReinforcementLearningBase as RLBase
 
 const T = Float32
 
+include("config.jl")
+
 # units
 
-const tu_per_wu = convert(T, 1)
 const wu_per_tu = 1 / tu_per_wu
-const pu_per_tu = 32
 const pu_per_wu = pu_per_tu * tu_per_wu
 
 # tile map
-
-const tm_layout = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-                   1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
-                   1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
-                   1 0 0 1 0 0 0 0 1 0 0 0 0 0 2 1
-                   1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1
-                   1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-                   1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-                   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-                  ]
 
 const height_tm_tu = size(tm_layout, 1)
 const width_tm_tu = size(tm_layout, 2)
@@ -32,15 +22,9 @@ const tm = RC.generate_tile_map(tm_layout)
 
 # agent
 
-const theta_30 = convert(T, pi / 6)
-const radius_wu = convert(T, 0.5)
-const position_increment = convert(T, 0.05)
-const theta_increment = convert(T, pi / 60)
 const direction_increment = SA.SVector(cos(theta_increment), sin(theta_increment))
 const direction_decrement = SA.SVector(direction_increment[1], -direction_increment[2])
 
-agent_position = SA.SVector(convert(T, 4.5), convert(T, 2.5))
-agent_direction = SA.SVector(cos(theta_30), sin(theta_30))
 camera_plane = RC.rotate_minus_90(agent_direction)
 
 const agent = RC.Agent(agent_position,
@@ -49,11 +33,6 @@ const agent = RC.Agent(agent_position,
                       )
 
 const circle = RC.StdCircle(radius_wu)
-
-# rays
-
-const num_rays = 256
-const semi_fov = convert(T, pi / 6)
 
 # world
 
@@ -106,12 +85,6 @@ function get_agent_region_tu(center_wu)
 end
 
 # main
-
-# function draw_tile_map_boundaries()
-    # tv[1:pu_per_tu:height_tv_pu, :] .= RC.gray
-    # tv[:, 1:pu_per_tu:width_tv_pu] .= RC.gray
-    # return nothing
-# end
 
 draw_agent() = RC.draw_circle!(tv, get_agent_center_pu()..., radius_pu, RC.green)
 
