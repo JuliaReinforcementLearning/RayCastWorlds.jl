@@ -92,3 +92,13 @@ function get_tile_color(tile_map, i::Integer, j::Integer)
 
     return color
 end
+
+function draw_tile_map_boundaries!(img::AbstractMatrix, pu_per_tu, color)
+    height_tv_pu = size(img, 1)
+    width_tv_pu = size(img, 2)
+
+    img[1:pu_per_tu:height_tv_pu, :] .= color
+    img[:, 1:pu_per_tu:width_tv_pu] .= color
+
+    return nothing
+end

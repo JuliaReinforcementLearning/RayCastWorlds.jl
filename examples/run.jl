@@ -85,30 +85,16 @@ const fb_cv = zeros(UInt32, width_cv_pu, height_cv_pu)
 const fb_cv_tv = view(fb_cv, 1:width_tv_pu, 1:height_tv_pu)
 const fb_cv_av = view(fb_cv, width_tv_pu + 1 : width_cv_pu, 1:height_av_pu)
 
-# tile map region
-
-get_tile_map_region_tu() = CartesianIndices((1:height_tm_tu, 1:width_tm_tu))
-
 # tile region
 
 get_tile_bottom_left_wu((i_tu, j_tu)) = ((j_tu - 1) * wu_per_tu, (height_tm_tu - i_tu) * wu_per_tu)
 get_tile_center_wu(tile_tu) = get_tile_bottom_left_wu(tile_tu) .+ tile_half_side_wu
-get_tile_start_pu(i_tu) = (i_tu - 1) * pu_per_tu + 1
-get_tile_stop_pu(i_tu) = i_tu * pu_per_tu
 
 # agent region
 
 const radius_pu = RC.wu_to_pu(radius_wu, pu_per_wu)
 
 get_agent_center_pu() = RC.wu_to_pu(agent.position, pu_per_wu, height_world_wu)
-get_agent_top_left_pu(center_pu) = center_pu .- (radius_pu - 1)
-get_agent_bottom_right_pu(center_pu) = center_pu .+ (radius_pu - 1)
-function get_agent_region_pu(center_pu)
-    start_i, start_j = get_agent_top_left_pu(center_pu)
-    stop_i, stop_j = get_agent_bottom_right_pu(center_pu)
-    return CartesianIndices((start_i:stop_i, start_j:stop_j))
-end
-get_agent_region_pu() = get_agent_region_pu(get_agent_center_pu())
 
 get_agent_bottom_left_tu(center_wu) = RC.wu_to_tu(center_wu .- radius_wu, tu_per_wu, height_world_wu)
 get_agent_top_right_tu(center_wu) = RC.wu_to_tu(center_wu .+ radius_wu, tu_per_wu, height_world_wu)
@@ -121,11 +107,11 @@ end
 
 # main
 
-function draw_tile_map_boundaries()
-    tv[1:pu_per_tu:height_tv_pu, :] .= RC.gray
-    tv[:, 1:pu_per_tu:width_tv_pu] .= RC.gray
-    return nothing
-end
+# function draw_tile_map_boundaries()
+    # tv[1:pu_per_tu:height_tv_pu, :] .= RC.gray
+    # tv[:, 1:pu_per_tu:width_tv_pu] .= RC.gray
+    # return nothing
+# end
 
 draw_agent() = RC.draw_circle!(tv, get_agent_center_pu()..., radius_pu, RC.green)
 
@@ -144,7 +130,6 @@ function draw_rays_tv()
         ray_stop_wu = agent_position + dist * ray_dir
         ray_stop_pu = RC.wu_to_pu(ray_stop_wu, pu_per_wu, height_world_wu)
         RC.draw_line!(tv, ray_start_pu..., ray_stop_pu..., RC.red)
-
     end
 
     return nothing
@@ -266,7 +251,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
         end
 
         RC.draw_tile_map!(tv, tm)
-        draw_tile_map_boundaries()
+        RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
         draw_agent()
         draw_rays_tv()
         draw_rays_av()
@@ -280,7 +265,7 @@ function render_cv()
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     RC.draw_tile_map!(tv, tm)
-    draw_tile_map_boundaries()
+    RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
     draw_agent()
     draw_rays_tv()
     draw_rays_av()
@@ -306,7 +291,7 @@ function render_tv()
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     RC.draw_tile_map!(tv, tm)
-    draw_tile_map_boundaries()
+    RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
     draw_agent()
     draw_rays_tv()
     draw_rays_av()
@@ -331,7 +316,7 @@ function render_av()
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     RC.draw_tile_map!(tv, tm)
-    draw_tile_map_boundaries()
+    RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
     draw_agent()
     draw_rays_tv()
     draw_rays_av()
