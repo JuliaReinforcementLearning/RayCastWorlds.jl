@@ -85,14 +85,6 @@ const fb_cv = zeros(UInt32, width_cv_pu, height_cv_pu)
 const fb_cv_tv = view(fb_cv, 1:width_tv_pu, 1:height_tv_pu)
 const fb_cv_av = view(fb_cv, width_tv_pu + 1 : width_cv_pu, 1:height_av_pu)
 
-# conversion
-
-wu_to_pu(x_wu::AbstractFloat) = floor(Int, x_wu * pu_per_wu) + 1
-wu_to_pu((x_wu, y_wu)) = (wu_to_pu(height_world_wu - y_wu), wu_to_pu(x_wu))
-wu_to_tu(x_wu::AbstractFloat) = floor(Int, x_wu * tu_per_wu) + 1
-wu_to_tu((x_wu, y_wu)) = (wu_to_tu(height_world_wu - y_wu), wu_to_tu(x_wu))
-pu_to_tu(i_pu::Integer) = (i_pu - 1) ÷ pu_per_tu + 1
-
 # tile map region
 
 get_tile_map_region_tu() = CartesianIndices((1:height_tm_tu, 1:width_tm_tu))
@@ -106,9 +98,9 @@ get_tile_stop_pu(i_tu) = i_tu * pu_per_tu
 
 # agent region
 
-const radius_pu = wu_to_pu(radius_wu)
+const radius_pu = RC.wu_to_pu(radius_wu, pu_per_wu)
 
-get_agent_center_pu() = wu_to_pu(agent.position)
+get_agent_center_pu() = RC.wu_to_pu(agent.position, pu_per_wu, height_world_wu)
 get_agent_top_left_pu(center_pu) = center_pu .- (radius_pu - 1)
 get_agent_bottom_right_pu(center_pu) = center_pu .+ (radius_pu - 1)
 function get_agent_region_pu(center_pu)
@@ -118,8 +110,8 @@ function get_agent_region_pu(center_pu)
 end
 get_agent_region_pu() = get_agent_region_pu(get_agent_center_pu())
 
-get_agent_bottom_left_tu(center_wu) = wu_to_tu(center_wu .- radius_wu)
-get_agent_top_right_tu(center_wu) = wu_to_tu(center_wu .+ radius_wu)
+get_agent_bottom_left_tu(center_wu) = RC.wu_to_tu(center_wu .- radius_wu, tu_per_wu, height_world_wu)
+get_agent_top_right_tu(center_wu) = RC.wu_to_tu(center_wu .+ radius_wu, tu_per_wu, height_world_wu)
 
 function get_agent_region_tu(center_wu)
     start_i, stop_j = get_agent_top_right_tu(center_wu)
@@ -150,7 +142,7 @@ function draw_rays_tv()
     for (ray_idx, ray_dir) in enumerate(ray_dirs)
         dist, side, hit_pos_tu = cast_ray(ray_dir)
         ray_stop_wu = agent_position + dist * ray_dir
-        ray_stop_pu = wu_to_pu(ray_stop_wu)
+        ray_stop_pu = RC.wu_to_pu(ray_stop_wu, pu_per_wu, height_world_wu)
         RC.draw_line!(tv, ray_start_pu..., ray_stop_pu..., RC.red)
 
     end
@@ -196,8 +188,8 @@ end
 
 function cast_ray(ray_dir)
     pos_x, pos_y = agent.position
-    map_x = wu_to_tu(pos_x) - 1
-    map_y = wu_to_tu(pos_y) - 1
+    map_x = RC.wu_to_tu(pos_x, tu_per_wu) - 1
+    map_y = RC.wu_to_tu(pos_y, tu_per_wu) - 1
 
     ray_dir_x, ray_dir_y = ray_dir
     delta_dist_x = abs(1 / ray_dir_x)
