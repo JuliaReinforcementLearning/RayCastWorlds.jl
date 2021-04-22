@@ -15,18 +15,18 @@ const pu_per_wu = pu_per_tu * tu_per_wu
 
 # tile map
 
-const height_tm_tu = 8
-const width_tm_tu = 16
+const tm_layout = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+                   1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
+                   1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
+                   1 0 0 1 0 0 0 0 1 0 0 0 0 0 2 1
+                   1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1
+                   1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+                   1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+                   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+                  ]
 
-tm_layout = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-             1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
-             1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
-             1 0 0 1 0 0 0 0 1 0 0 0 0 0 2 1
-             1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1
-             1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-             1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-            ]
+const height_tm_tu = size(tm_layout, 1)
+const width_tm_tu = size(tm_layout, 2)
 
 const tm = RC.generate_tile_map(tm_layout)
 
