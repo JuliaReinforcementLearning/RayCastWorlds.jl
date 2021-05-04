@@ -92,42 +92,6 @@ function draw_rays_tv()
     return nothing
 end
 
-function draw_av()
-    agent_position = agent.position
-    agent_direction = agent.direction
-    ray_dirs = RC.get_rays(agent_direction, semi_fov, num_rays)
-
-    for (ray_idx, ray_dir) in enumerate(ray_dirs)
-        dist, side, hit_pos_tu = RC.cast_ray(tm, ray_dir, agent_position, wu_per_tu)
-
-        per_dist = dist * sum(agent_direction .* ray_dir)
-        height_line_pu = floor(Int, height_av_pu / per_dist)
-
-        idx = num_rays - ray_idx + 1
-
-        if tm[GW.WALL, hit_pos_tu...] && side == 1
-            color = RC.dark_gray
-        elseif tm[GW.WALL, hit_pos_tu...] && side == 0
-            color = RC.gray
-        elseif tm[GW.GOAL, hit_pos_tu...] && side == 1
-            color = RC.dark_blue
-        elseif tm[GW.GOAL, hit_pos_tu...] && side == 0
-            color = RC.blue
-        end
-
-        if height_line_pu >= height_av_pu - 1
-            av[:, idx] .= color
-        else
-            padding_pu = (height_av_pu - height_line_pu) ÷ 2
-            av[1:padding_pu, idx] .= RC.white
-            av[padding_pu + 1 : end - padding_pu, idx] .= color
-            av[end - padding_pu + 1 : end, idx] .= RC.black
-        end
-    end
-
-    return nothing
-end
-
 function keyboard_callback(window, key, mod, isPressed)::Cvoid
     if isPressed
         display(key)
@@ -160,7 +124,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
         # draw_agent
         RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
         draw_rays_tv()
-        draw_av()
+        RC.draw_av(av, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu)
     end
 
     return nothing
@@ -175,7 +139,7 @@ function render_cv()
     # draw_agent
     RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
-    draw_av()
+    RC.draw_av(av, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu)
 
     while MFB.mfb_wait_sync(window)
         permutedims!(fb_cv_tv, tv, (2, 1))
@@ -202,7 +166,7 @@ function render_tv()
     # draw_agent
     RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
-    draw_av()
+    RC.draw_av(av, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu)
 
     while MFB.mfb_wait_sync(window)
         permutedims!(fb_tv, tv, (2, 1))
@@ -228,7 +192,7 @@ function render_av()
     # draw_agent
     RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
-    draw_av()
+    RC.draw_av(av, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu)
 
     while MFB.mfb_wait_sync(window)
         permutedims!(fb_av, av, (2, 1))

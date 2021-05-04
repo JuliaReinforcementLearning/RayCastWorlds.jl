@@ -158,3 +158,40 @@ function cast_ray(tm, ray_dir, pos_wu, wu_per_tu)
 
     return dist, side, hit_pos_tu
 end
+
+# draw av
+
+function draw_av(av, tm, agent_position, agent_direction, semi_fov, num_rays, wu_per_tu)
+    height_av_pu = size(av, 1)
+    ray_dirs = get_rays(agent_direction, semi_fov, num_rays)
+
+    for (ray_idx, ray_dir) in enumerate(ray_dirs)
+        dist, side, hit_pos_tu = cast_ray(tm, ray_dir, agent_position, wu_per_tu)
+
+        per_dist = dist * sum(agent_direction .* ray_dir)
+        height_line_pu = floor(Int, height_av_pu / per_dist)
+
+        idx = num_rays - ray_idx + 1
+
+        if tm[GW.WALL, hit_pos_tu...] && side == 1
+            color = dark_gray
+        elseif tm[GW.WALL, hit_pos_tu...] && side == 0
+            color = gray
+        elseif tm[GW.GOAL, hit_pos_tu...] && side == 1
+            color = dark_blue
+        elseif tm[GW.GOAL, hit_pos_tu...] && side == 0
+            color = blue
+        end
+
+        if height_line_pu >= height_av_pu - 1
+            av[:, idx] .= color
+        else
+            padding_pu = (height_av_pu - height_line_pu) ÷ 2
+            av[1:padding_pu, idx] .= white
+            av[padding_pu + 1 : end - padding_pu, idx] .= color
+            av[end - padding_pu + 1 : end, idx] .= black
+        end
+    end
+
+    return nothing
+end
