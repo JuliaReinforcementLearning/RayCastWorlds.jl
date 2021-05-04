@@ -161,7 +161,7 @@ end
 
 # draw av
 
-function draw_av(av, tm, agent_position, agent_direction, semi_fov, num_rays, wu_per_tu)
+function draw_av!(av, tm, agent_position, agent_direction, semi_fov, num_rays, wu_per_tu)
     height_av_pu = size(av, 1)
     ray_dirs = get_rays(agent_direction, semi_fov, num_rays)
 
@@ -198,7 +198,7 @@ end
 
 # draw tv
 
-function draw_tv(tv, tm, agent_position, agent_direction, semi_fov, num_rays, wu_per_tu, pu_per_tu, pu_per_wu, height_world_wu, radius_pu)
+function draw_tv!(tv, tm, agent_position, agent_direction, semi_fov, num_rays, wu_per_tu, pu_per_tu, pu_per_wu, height_world_wu, radius_pu)
     draw_tile_map!(tv, tm)
     draw_tile_map_boundaries!(tv, pu_per_tu, gray)
     # draw_agent
