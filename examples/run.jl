@@ -10,8 +10,7 @@ include("config.jl")
 
 # units
 
-const wu_per_tu = 1 / tu_per_wu
-const pu_per_wu = pu_per_tu * tu_per_wu
+const pu_per_wu = pu_per_tu / wu_per_tu
 
 # tile map
 
@@ -36,8 +35,8 @@ const circle = RC.StdCircle(radius_wu)
 
 # world
 
-const height_world_wu = convert(T, height_tm_tu / tu_per_wu)
-const width_world_wu = convert(T, width_tm_tu / tu_per_wu)
+const height_world_wu = convert(T, height_tm_tu * wu_per_tu)
+const width_world_wu = convert(T, width_tm_tu * wu_per_tu)
 
 const world = RC.World(tm, height_world_wu, width_world_wu, agent)
 
@@ -75,8 +74,8 @@ const radius_pu = RC.wu_to_pu(radius_wu, pu_per_wu)
 
 get_agent_center_pu() = RC.wu_to_pu(agent.position, pu_per_wu, height_world_wu)
 
-get_agent_bottom_left_tu(center_wu) = RC.wu_to_tu(center_wu .- radius_wu, tu_per_wu, height_world_wu)
-get_agent_top_right_tu(center_wu) = RC.wu_to_tu(center_wu .+ radius_wu, tu_per_wu, height_world_wu)
+get_agent_bottom_left_tu(center_wu) = RC.wu_to_tu(center_wu .- radius_wu, wu_per_tu, height_world_wu)
+get_agent_top_right_tu(center_wu) = RC.wu_to_tu(center_wu .+ radius_wu, wu_per_tu, height_world_wu)
 
 function get_agent_region_tu(center_wu)
     start_i, stop_j = get_agent_top_right_tu(center_wu)
@@ -146,8 +145,8 @@ end
 
 function cast_ray(ray_dir)
     pos_x, pos_y = agent.position
-    map_x = RC.wu_to_tu(pos_x, tu_per_wu) - 1
-    map_y = RC.wu_to_tu(pos_y, tu_per_wu) - 1
+    map_x = RC.wu_to_tu(pos_x, wu_per_tu) - 1
+    map_y = RC.wu_to_tu(pos_y, wu_per_tu) - 1
 
     ray_dir_x, ray_dir_y = ray_dir
     delta_dist_x = abs(1 / ray_dir_x)

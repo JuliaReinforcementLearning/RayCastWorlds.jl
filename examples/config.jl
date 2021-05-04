@@ -1,4 +1,4 @@
-const tu_per_wu = convert(T, 1)
+const wu_per_tu = convert(T, 1)
 const pu_per_tu = 32
 
 const tm_layout = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
