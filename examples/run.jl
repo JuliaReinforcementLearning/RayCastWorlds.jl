@@ -101,7 +101,7 @@ function draw_rays_tv()
     ray_dirs = RC.get_rays(agent_direction, semi_fov, num_rays)
 
     for (ray_idx, ray_dir) in enumerate(ray_dirs)
-        dist, side, hit_pos_tu = cast_ray(ray_dir)
+        dist, side, hit_pos_tu = cast_ray(tm, ray_dir, agent_position, wu_per_tu)
         ray_stop_wu = agent_position + dist * ray_dir
         ray_stop_pu = RC.wu_to_pu(ray_stop_wu, pu_per_wu, height_world_wu)
         RC.draw_line!(tv, ray_start_pu..., ray_stop_pu..., RC.red)
@@ -116,7 +116,7 @@ function draw_rays_av()
     ray_dirs = RC.get_rays(agent_direction, semi_fov, num_rays)
 
     for (ray_idx, ray_dir) in enumerate(ray_dirs)
-        dist, side, hit_pos_tu = cast_ray(ray_dir)
+        dist, side, hit_pos_tu = cast_ray(tm, ray_dir, agent_position, wu_per_tu)
 
         per_dist = dist * sum(agent_direction .* ray_dir)
         height_line_pu = floor(Int, height_av_pu / per_dist)
@@ -146,8 +146,9 @@ function draw_rays_av()
     return nothing
 end
 
-function cast_ray(ray_dir)
-    pos_x, pos_y = agent.position
+function cast_ray(tm, ray_dir, pos_wu, wu_per_tu)
+    T = typeof(wu_per_tu)
+    pos_x, pos_y = pos_wu
     map_x = RC.wu_to_tu(pos_x, wu_per_tu) - 1
     map_y = RC.wu_to_tu(pos_y, wu_per_tu) - 1
 
