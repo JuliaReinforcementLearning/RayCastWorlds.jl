@@ -63,11 +63,6 @@ const fb_cv = zeros(UInt32, width_cv_pu, height_cv_pu)
 const fb_cv_tv = view(fb_cv, 1:width_tv_pu, 1:height_tv_pu)
 const fb_cv_av = view(fb_cv, width_tv_pu + 1 : width_cv_pu, 1:height_av_pu)
 
-# tile region
-
-get_tile_bottom_left_wu((i_tu, j_tu), wu_per_tu, height_tm_tu) = ((j_tu - 1) * wu_per_tu, (height_tm_tu - i_tu) * wu_per_tu)
-get_tile_center_wu(tile_tu, wu_per_tu, height_tm_tu, tile_half_side_wu) = get_tile_bottom_left_wu(tile_tu, wu_per_tu, height_tm_tu) .+ tile_half_side_wu
-
 # agent region
 
 const radius_pu = RC.wu_to_pu(radius_wu, pu_per_wu)
@@ -89,7 +84,7 @@ function is_agent_colliding(tm, center_wu, wu_per_tu, tile_half_side_wu, radius_
     height_tm_tu = size(tm, 2)
     square = RC.StdSquare(tile_half_side_wu)
     circle = RC.StdCircle(radius_wu)
-    return any(pos -> (tm[GW.WALL, pos] || tm[GW.GOAL, pos]) && RC.is_colliding(square, circle, center_wu .- get_tile_center_wu(pos.I, wu_per_tu, height_tm_tu, tile_half_side_wu)), get_agent_region_tu(center_wu, radius_wu, wu_per_tu, height_world_wu))
+    return any(pos -> (tm[GW.WALL, pos] || tm[GW.GOAL, pos]) && RC.is_colliding(square, circle, center_wu .- RC.get_tile_center_wu(pos.I, wu_per_tu, height_tm_tu, tile_half_side_wu)), get_agent_region_tu(center_wu, radius_wu, wu_per_tu, height_world_wu))
 end
 
 map_to_tu((map_x, map_y), height_tm_tu) = (height_tm_tu - map_y, map_x + 1)
