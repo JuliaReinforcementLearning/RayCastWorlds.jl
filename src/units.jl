@@ -16,3 +16,14 @@ get_tile_stop_pu(i_tu, pu_per_tu) = i_tu * pu_per_tu
 
 get_tile_bottom_left_wu((i_tu, j_tu), wu_per_tu, height_tm_tu) = ((j_tu - 1) * wu_per_tu, (height_tm_tu - i_tu) * wu_per_tu)
 get_tile_center_wu(tile_tu, wu_per_tu, height_tm_tu, tile_half_side_wu) = get_tile_bottom_left_wu(tile_tu, wu_per_tu, height_tm_tu) .+ tile_half_side_wu
+
+# agent region
+
+get_agent_bottom_left_tu(center_wu, radius_wu, wu_per_tu, height_world_wu) = wu_to_tu(center_wu .- radius_wu, wu_per_tu, height_world_wu)
+get_agent_top_right_tu(center_wu, radius_wu, wu_per_tu, height_world_wu) = wu_to_tu(center_wu .+ radius_wu, wu_per_tu, height_world_wu)
+
+function get_agent_region_tu(center_wu, radius_wu, wu_per_tu, height_world_wu)
+    start_i, stop_j = get_agent_top_right_tu(center_wu, radius_wu, wu_per_tu, height_world_wu)
+    stop_i, start_j = get_agent_bottom_left_tu(center_wu, radius_wu, wu_per_tu, height_world_wu)
+    return CartesianIndices((start_i:stop_i, start_j:stop_j))
+end
