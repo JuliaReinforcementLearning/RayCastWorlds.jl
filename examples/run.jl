@@ -85,8 +85,6 @@ end
 
 # main
 
-draw_agent() = RC.draw_circle!(tv, get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
-
 is_agent_colliding(center_wu) = any(pos -> (tm[GW.WALL, pos] || tm[GW.GOAL, pos]) && RC.is_colliding(square, circle, center_wu .- get_tile_center_wu(pos.I, wu_per_tu, height_tm_tu, tile_half_side_wu)), get_agent_region_tu(center_wu, radius_wu, wu_per_tu, height_world_wu))
 
 map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
@@ -224,7 +222,8 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
 
         RC.draw_tile_map!(tv, tm)
         RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
-        draw_agent()
+        # draw_agent
+        RC.draw_circle!(tv, get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
         draw_rays_tv()
         draw_rays_av()
     end
@@ -238,7 +237,8 @@ function render_cv()
 
     RC.draw_tile_map!(tv, tm)
     RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
-    draw_agent()
+    # draw_agent
+    RC.draw_circle!(tv, get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
     draw_rays_av()
 
@@ -264,7 +264,8 @@ function render_tv()
 
     RC.draw_tile_map!(tv, tm)
     RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
-    draw_agent()
+    # draw_agent
+    RC.draw_circle!(tv, get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
     draw_rays_av()
 
@@ -289,7 +290,8 @@ function render_av()
 
     RC.draw_tile_map!(tv, tm)
     RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
-    draw_agent()
+    # draw_agent
+    RC.draw_circle!(tv, get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
     draw_rays_av()
 
