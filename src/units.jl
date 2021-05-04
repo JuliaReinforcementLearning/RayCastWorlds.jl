@@ -19,6 +19,8 @@ get_tile_center_wu(tile_tu, wu_per_tu, height_tm_tu, tile_half_side_wu) = get_ti
 
 # agent region
 
+get_agent_center_pu(pos_wu, pu_per_wu, height_world_wu) = wu_to_pu(pos_wu, pu_per_wu, height_world_wu)
+
 get_agent_bottom_left_tu(center_wu, radius_wu, wu_per_tu, height_world_wu) = wu_to_tu(center_wu .- radius_wu, wu_per_tu, height_world_wu)
 get_agent_top_right_tu(center_wu, radius_wu, wu_per_tu, height_world_wu) = wu_to_tu(center_wu .+ radius_wu, wu_per_tu, height_world_wu)
 

@@ -67,8 +67,6 @@ const fb_cv_av = view(fb_cv, width_tv_pu + 1 : width_cv_pu, 1:height_av_pu)
 
 const radius_pu = RC.wu_to_pu(radius_wu, pu_per_wu)
 
-get_agent_center_pu(pos_wu, pu_per_wu, height_world_wu) = RC.wu_to_pu(pos_wu, pu_per_wu, height_world_wu)
-
 # main
 
 function is_agent_colliding(tm, center_wu, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu)
@@ -81,7 +79,7 @@ end
 map_to_tu((map_x, map_y), height_tm_tu) = (height_tm_tu - map_y, map_x + 1)
 
 function draw_rays_tv()
-    ray_start_pu = get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)
+    ray_start_pu = RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)
     agent_position = agent.position
     agent_direction = agent.direction
     ray_dirs = RC.get_rays(agent_direction, semi_fov, num_rays)
@@ -215,7 +213,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
         RC.draw_tile_map!(tv, tm)
         RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
         # draw_agent
-        RC.draw_circle!(tv, get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
+        RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
         draw_rays_tv()
         draw_rays_av()
     end
@@ -230,7 +228,7 @@ function render_cv()
     RC.draw_tile_map!(tv, tm)
     RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
     # draw_agent
-    RC.draw_circle!(tv, get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
+    RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
     draw_rays_av()
 
@@ -257,7 +255,7 @@ function render_tv()
     RC.draw_tile_map!(tv, tm)
     RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
     # draw_agent
-    RC.draw_circle!(tv, get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
+    RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
     draw_rays_av()
 
@@ -283,7 +281,7 @@ function render_av()
     RC.draw_tile_map!(tv, tm)
     RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
     # draw_agent
-    RC.draw_circle!(tv, get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
+    RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
     draw_rays_av()
 
