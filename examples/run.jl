@@ -131,7 +131,6 @@ function render_tv()
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
     RC.draw_tv!(tv, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu, pu_per_tu, pu_per_wu, height_world_wu, radius_pu)
-    RC.draw_av!(av, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu)
 
     while MFB.mfb_wait_sync(window)
         permutedims!(fb_tv, tv, (2, 1))
@@ -152,7 +151,6 @@ function render_av()
     window = MFB.mfb_open("Agent View", width_av_pu, height_av_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
-    RC.draw_tv!(tv, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu, pu_per_tu, pu_per_wu, height_world_wu, radius_pu)
     RC.draw_av!(av, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu)
 
     while MFB.mfb_wait_sync(window)
