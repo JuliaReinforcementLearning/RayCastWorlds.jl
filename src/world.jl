@@ -38,32 +38,9 @@ function generate_tile_map(tm_layout::Matrix{Int})
     return tile_map
 end
 
-rotate(x, y, c, s) = SA.SVector(c * x - s * y, s * x + c * y)
-rotate(vec, dir) = rotate(vec[1], vec[2], dir[1], dir[2])
-rotate_plus_90(vec) = typeof(vec)(-vec[2], vec[1])
-rotate_minus_90(vec) = typeof(vec)(vec[2], -vec[1])
-rotate_180(vec) = -vec
-
-struct StdSquare{T}
-    half_side::T
-end
-
-get_half_side(square::StdSquare) = square.half_side
-
-struct StdCircle{T}
-    radius::T
-end
-
-get_radius(circle::StdCircle) = circle.radius
-
-function get_projection(square::StdSquare, pos)
-    half_side = get_half_side(square)
-    return clamp.(pos, -half_side, half_side)
-end
-
-function is_colliding(square::StdSquare, circle::StdCircle, pos)
-    projection = get_projection(square, pos)
-    vec = pos - projection
-    radius = get_radius(circle)
-    return sum(vec .^ 2) < radius * radius
+function is_agent_colliding(tm, center_wu, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu)
+    height_tm_tu = size(tm, 2)
+    square = StdSquare(tile_half_side_wu)
+    circle = StdCircle(radius_wu)
+    return any(pos -> (tm[GW.WALL, pos] || tm[GW.GOAL, pos]) && is_colliding(square, circle, center_wu .- get_tile_center_wu(pos.I, wu_per_tu, height_tm_tu, tile_half_side_wu)), get_agent_region_tu(center_wu, radius_wu, wu_per_tu, height_world_wu))
 end
