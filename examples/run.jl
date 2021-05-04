@@ -69,13 +69,6 @@ const radius_pu = RC.wu_to_pu(radius_wu, pu_per_wu)
 
 # main
 
-function is_agent_colliding(tm, center_wu, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu)
-    height_tm_tu = size(tm, 2)
-    square = RC.StdSquare(tile_half_side_wu)
-    circle = RC.StdCircle(radius_wu)
-    return any(pos -> (tm[GW.WALL, pos] || tm[GW.GOAL, pos]) && RC.is_colliding(square, circle, center_wu .- RC.get_tile_center_wu(pos.I, wu_per_tu, height_tm_tu, tile_half_side_wu)), RC.get_agent_region_tu(center_wu, radius_wu, wu_per_tu, height_world_wu))
-end
-
 function draw_rays_tv()
     ray_start_pu = RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)
     agent_position = agent.position
@@ -99,12 +92,12 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
 
         if key == MFB.KB_KEY_UP
             new_position = agent.position + position_increment * agent.direction
-            if !is_agent_colliding(tm, new_position, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu)
+            if !RC.is_agent_colliding(tm, new_position, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu)
                 agent.position = new_position
             end
         elseif key == MFB.KB_KEY_DOWN
             new_position = agent.position - position_increment * agent.direction
-            if !is_agent_colliding(tm, new_position, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu)
+            if !RC.is_agent_colliding(tm, new_position, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu)
                 agent.position = new_position
             end
         elseif key == MFB.KB_KEY_LEFT
