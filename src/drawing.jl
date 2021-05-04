@@ -195,3 +195,25 @@ function draw_av(av, tm, agent_position, agent_direction, semi_fov, num_rays, wu
 
     return nothing
 end
+
+# draw tv
+
+function draw_tv(tv, tm, agent_position, agent_direction, semi_fov, num_rays, wu_per_tu, pu_per_tu, pu_per_wu, height_world_wu, radius_pu)
+    draw_tile_map!(tv, tm)
+    draw_tile_map_boundaries!(tv, pu_per_tu, gray)
+    # draw_agent
+    draw_circle!(tv, get_agent_center_pu(agent_position, pu_per_wu, height_world_wu)..., radius_pu, green)
+
+    # draw_rays
+    ray_start_pu = get_agent_center_pu(agent_position, pu_per_wu, height_world_wu)
+    ray_dirs = get_rays(agent_direction, semi_fov, num_rays)
+
+    for (ray_idx, ray_dir) in enumerate(ray_dirs)
+        dist, side, hit_pos_tu = cast_ray(tm, ray_dir, agent_position, wu_per_tu)
+        ray_stop_wu = agent_position + dist * ray_dir
+        ray_stop_pu = wu_to_pu(ray_stop_wu, pu_per_wu, height_world_wu)
+        draw_line!(tv, ray_start_pu..., ray_stop_pu..., red)
+    end
+
+    return nothing
+end

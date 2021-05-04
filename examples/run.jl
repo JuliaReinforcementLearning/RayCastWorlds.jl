@@ -69,21 +69,21 @@ const radius_pu = RC.wu_to_pu(radius_wu, pu_per_wu)
 
 # main
 
-function draw_rays_tv()
-    ray_start_pu = RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)
-    agent_position = agent.position
-    agent_direction = agent.direction
-    ray_dirs = RC.get_rays(agent_direction, semi_fov, num_rays)
+# function draw_rays_tv()
+    # ray_start_pu = RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)
+    # agent_position = agent.position
+    # agent_direction = agent.direction
+    # ray_dirs = RC.get_rays(agent_direction, semi_fov, num_rays)
 
-    for (ray_idx, ray_dir) in enumerate(ray_dirs)
-        dist, side, hit_pos_tu = RC.cast_ray(tm, ray_dir, agent_position, wu_per_tu)
-        ray_stop_wu = agent_position + dist * ray_dir
-        ray_stop_pu = RC.wu_to_pu(ray_stop_wu, pu_per_wu, height_world_wu)
-        RC.draw_line!(tv, ray_start_pu..., ray_stop_pu..., RC.red)
-    end
+    # for (ray_idx, ray_dir) in enumerate(ray_dirs)
+        # dist, side, hit_pos_tu = RC.cast_ray(tm, ray_dir, agent_position, wu_per_tu)
+        # ray_stop_wu = agent_position + dist * ray_dir
+        # ray_stop_pu = RC.wu_to_pu(ray_stop_wu, pu_per_wu, height_world_wu)
+        # RC.draw_line!(tv, ray_start_pu..., ray_stop_pu..., RC.red)
+    # end
 
-    return nothing
-end
+    # return nothing
+# end
 
 function keyboard_callback(window, key, mod, isPressed)::Cvoid
     if isPressed
@@ -112,11 +112,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
             MFB.mfb_close(window)
         end
 
-        RC.draw_tile_map!(tv, tm)
-        RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
-        # draw_agent
-        RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
-        draw_rays_tv()
+        RC.draw_tv(tv, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu, pu_per_tu, pu_per_wu, height_world_wu, radius_pu)
         RC.draw_av(av, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu)
     end
 
@@ -127,11 +123,7 @@ function render_cv()
     window = MFB.mfb_open("Combined View", width_cv_pu, height_cv_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
-    RC.draw_tile_map!(tv, tm)
-    RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
-    # draw_agent
-    RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
-    draw_rays_tv()
+    RC.draw_tv(tv, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu, pu_per_tu, pu_per_wu, height_world_wu, radius_pu)
     RC.draw_av(av, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu)
 
     while MFB.mfb_wait_sync(window)
@@ -154,11 +146,7 @@ function render_tv()
     window = MFB.mfb_open("Top View", width_tv_pu, height_tv_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
-    RC.draw_tile_map!(tv, tm)
-    RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
-    # draw_agent
-    RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
-    draw_rays_tv()
+    RC.draw_tv(tv, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu, pu_per_tu, pu_per_wu, height_world_wu, radius_pu)
     RC.draw_av(av, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu)
 
     while MFB.mfb_wait_sync(window)
@@ -180,11 +168,7 @@ function render_av()
     window = MFB.mfb_open("Agent View", width_av_pu, height_av_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
 
-    RC.draw_tile_map!(tv, tm)
-    RC.draw_tile_map_boundaries!(tv, pu_per_tu, RC.gray)
-    # draw_agent
-    RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
-    draw_rays_tv()
+    RC.draw_tv(tv, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu, pu_per_tu, pu_per_wu, height_world_wu, radius_pu)
     RC.draw_av(av, tm, agent.position, agent.direction, semi_fov, num_rays, wu_per_tu)
 
     while MFB.mfb_wait_sync(window)
