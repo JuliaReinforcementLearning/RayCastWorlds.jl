@@ -92,7 +92,7 @@ function is_agent_colliding(tm, center_wu, wu_per_tu, tile_half_side_wu, radius_
     return any(pos -> (tm[GW.WALL, pos] || tm[GW.GOAL, pos]) && RC.is_colliding(square, circle, center_wu .- get_tile_center_wu(pos.I, wu_per_tu, height_tm_tu, tile_half_side_wu)), get_agent_region_tu(center_wu, radius_wu, wu_per_tu, height_world_wu))
 end
 
-map_to_tu((map_x, map_y)) = (height_tm_tu - map_y, map_x + 1)
+map_to_tu((map_x, map_y), height_tm_tu) = (height_tm_tu - map_y, map_x + 1)
 
 function draw_rays_tv()
     ray_start_pu = get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)
@@ -189,7 +189,7 @@ function cast_ray(ray_dir)
             side = 1
         end
 
-        hit_pos_tu = map_to_tu((map_x, map_y))
+        hit_pos_tu = map_to_tu((map_x, map_y), height_tm_tu)
         if tm[GW.WALL, hit_pos_tu...] || tm[GW.GOAL, hit_pos_tu...]
             hit = 1
         end
