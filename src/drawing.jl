@@ -102,3 +102,59 @@ function draw_tile_map_boundaries!(img::AbstractMatrix, pu_per_tu, color)
 
     return nothing
 end
+
+# cast ray
+
+function cast_ray(tm, ray_dir, pos_wu, wu_per_tu)
+    T = typeof(wu_per_tu)
+    height_tm_tu = size(tm, 2)
+    pos_x, pos_y = pos_wu
+    map_x = wu_to_tu(pos_x, wu_per_tu) - 1
+    map_y = wu_to_tu(pos_y, wu_per_tu) - 1
+
+    ray_dir_x, ray_dir_y = ray_dir
+    delta_dist_x = abs(1 / ray_dir_x)
+    delta_dist_y = abs(1 / ray_dir_y)
+
+    if ray_dir_x < zero(T)
+        step_x = -1
+        side_dist_x = (pos_x - map_x) * delta_dist_x
+    else
+        step_x = 1
+        side_dist_x = (map_x + 1 - pos_x) * delta_dist_x
+    end
+
+    if ray_dir_y < zero(T)
+        step_y = -1
+        side_dist_y = (pos_y - map_y) * delta_dist_y
+    else
+        step_y = 1
+        side_dist_y = (map_y + 1 - pos_y) * delta_dist_y
+    end
+
+    hit = 0
+    dist = Inf
+    hit_pos_tu = (1, 1)
+    side = 0
+
+    while (hit == 0)
+        dist = min(side_dist_x, side_dist_y)
+
+        if (side_dist_x < side_dist_y)
+            side_dist_x += delta_dist_x
+            map_x += step_x
+            side = 0
+        else
+            side_dist_y += delta_dist_y
+            map_y += step_y
+            side = 1
+        end
+
+        hit_pos_tu = map_to_tu((map_x, map_y), height_tm_tu)
+        if tm[GW.WALL, hit_pos_tu...] || tm[GW.GOAL, hit_pos_tu...]
+            hit = 1
+        end
+    end
+
+    return dist, side, hit_pos_tu
+end
