@@ -12,6 +12,8 @@ wu_to_tu((x_wu, y_wu), wu_per_tu, height_world_wu) = (wu_to_tu(height_world_wu -
 get_tile_start_pu(i_tu, pu_per_tu) = (i_tu - 1) * pu_per_tu + 1
 get_tile_stop_pu(i_tu, pu_per_tu) = i_tu * pu_per_tu
 
+map_to_tu((map_x, map_y), height_tm_tu) = (height_tm_tu - map_y, map_x + 1)
+
 # tile region
 
 get_tile_bottom_left_wu((i_tu, j_tu), wu_per_tu, height_tm_tu) = ((j_tu - 1) * wu_per_tu, (height_tm_tu - i_tu) * wu_per_tu)
