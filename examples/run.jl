@@ -92,7 +92,7 @@ function draw_rays_tv()
     return nothing
 end
 
-function draw_rays_av()
+function draw_av()
     agent_position = agent.position
     agent_direction = agent.direction
     ray_dirs = RC.get_rays(agent_direction, semi_fov, num_rays)
@@ -160,7 +160,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
         # draw_agent
         RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
         draw_rays_tv()
-        draw_rays_av()
+        draw_av()
     end
 
     return nothing
@@ -175,7 +175,7 @@ function render_cv()
     # draw_agent
     RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
-    draw_rays_av()
+    draw_av()
 
     while MFB.mfb_wait_sync(window)
         permutedims!(fb_cv_tv, tv, (2, 1))
@@ -202,7 +202,7 @@ function render_tv()
     # draw_agent
     RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
-    draw_rays_av()
+    draw_av()
 
     while MFB.mfb_wait_sync(window)
         permutedims!(fb_tv, tv, (2, 1))
@@ -228,7 +228,7 @@ function render_av()
     # draw_agent
     RC.draw_circle!(tv, RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)..., radius_pu, RC.green)
     draw_rays_tv()
-    draw_rays_av()
+    draw_av()
 
     while MFB.mfb_wait_sync(window)
         permutedims!(fb_av, av, (2, 1))
