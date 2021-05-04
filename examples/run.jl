@@ -4,8 +4,6 @@ import RayCaster as RC
 import StaticArrays as SA
 import ReinforcementLearningBase as RLBase
 
-const T = Float32
-
 include("config.jl")
 
 # units

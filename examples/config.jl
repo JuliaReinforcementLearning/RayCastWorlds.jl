@@ -1,3 +1,5 @@
+const T = Float32
+
 const wu_per_tu = convert(T, 1)
 const pu_per_tu = 32
 
