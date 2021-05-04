@@ -65,8 +65,8 @@ const fb_cv_av = view(fb_cv, width_tv_pu + 1 : width_cv_pu, 1:height_av_pu)
 
 # tile region
 
-get_tile_bottom_left_wu((i_tu, j_tu)) = ((j_tu - 1) * wu_per_tu, (height_tm_tu - i_tu) * wu_per_tu)
-get_tile_center_wu(tile_tu) = get_tile_bottom_left_wu(tile_tu) .+ tile_half_side_wu
+get_tile_bottom_left_wu((i_tu, j_tu), wu_per_tu, height_tm_tu) = ((j_tu - 1) * wu_per_tu, (height_tm_tu - i_tu) * wu_per_tu)
+get_tile_center_wu(tile_tu) = get_tile_bottom_left_wu(tile_tu, wu_per_tu, height_tm_tu) .+ tile_half_side_wu
 
 # agent region
 
