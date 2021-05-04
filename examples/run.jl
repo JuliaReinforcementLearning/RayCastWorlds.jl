@@ -69,22 +69,6 @@ const radius_pu = RC.wu_to_pu(radius_wu, pu_per_wu)
 
 # main
 
-# function draw_rays_tv()
-    # ray_start_pu = RC.get_agent_center_pu(agent.position, pu_per_wu, height_world_wu)
-    # agent_position = agent.position
-    # agent_direction = agent.direction
-    # ray_dirs = RC.get_rays(agent_direction, semi_fov, num_rays)
-
-    # for (ray_idx, ray_dir) in enumerate(ray_dirs)
-        # dist, side, hit_pos_tu = RC.cast_ray(tm, ray_dir, agent_position, wu_per_tu)
-        # ray_stop_wu = agent_position + dist * ray_dir
-        # ray_stop_pu = RC.wu_to_pu(ray_stop_wu, pu_per_wu, height_world_wu)
-        # RC.draw_line!(tv, ray_start_pu..., ray_stop_pu..., RC.red)
-    # end
-
-    # return nothing
-# end
-
 function keyboard_callback(window, key, mod, isPressed)::Cvoid
     if isPressed
         display(key)
