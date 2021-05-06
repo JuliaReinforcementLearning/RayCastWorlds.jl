@@ -11,28 +11,12 @@ import ReinforcementLearningCore as RLCore
 import ReinforcementLearningEnvironments as RLEnvs
 import ReinforcementLearningZoo as RLZoo
 
-# using CircularArrayBuffers
-# using Setfield: @set
 import TensorBoardLogger as TBL
 import StableRNGs
 import Logging
-# using Flux.Losses
+import Flux
 import Dates
-# using IntervalSets
 import Random
-# using Random: shuffle
-# using CUDA
-# using Zygote
-# using Zygote: ignore
-# using Flux
-# using Flux: onehot, normalise
-# using StatsBase
-# using StatsBase: sample, Weights, mean
-# using LinearAlgebra: dot
-# using MacroTools
-# using Distributions: Categorical, Normal, logpdf
-# using StructArrays
-
 
 #####
 # utils
@@ -94,24 +78,29 @@ end
 @generate_setters(RayCastWorld)
 
 function RayCastWorld(;
-        tm_layout = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-                   1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
-                   1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1
-                   1 0 0 1 0 0 0 0 1 0 0 0 0 0 2 1
-                   1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1
-                   1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-                   1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-                   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-                  ],
+        # tm_layout = [1 1 1 1 1 1 1 1
+                     # 1 0 0 0 0 0 0 1
+                     # 1 0 0 0 0 0 0 1
+                     # 1 0 0 0 0 0 0 1
+                     # 1 0 0 0 0 0 2 1
+                     # 1 0 0 0 0 0 0 1
+                     # 1 0 0 0 0 0 0 1
+                     # 1 1 1 1 1 1 1 1
+                    # ],
+        tm_layout = [1 1 1 1
+                     1 0 0 1
+                     1 0 2 1
+                     1 1 1 1
+                    ],
         T = Float32,
         wu_per_tu = convert(T, 1),
         pu_per_tu = 32,
-        agent_pos = SA.SVector(convert(T, 4.50f0), convert(T, 2.5)),
+        agent_pos = SA.SVector(convert(T, 1.5), convert(T, 2.5)),
         agent_dir = SA.SVector(cos(convert(T, pi / 6)), sin(convert(T, pi / 6))),
-        agent_radius_wu = convert(T, 0.5),
-        num_rays = 256,
+        agent_radius_wu = convert(T, 0.25),
+        num_rays = 128,
         semi_fov = convert(T, pi / 6),
-        position_increment = convert(T, 0.05),
+        position_increment = convert(T, 0.1),
         theta_increment = convert(T, pi / 60),
         rng = Random.GLOBAL_RNG,
     )
@@ -242,3 +231,94 @@ function display(env::RayCastWorld)
     IV.imshow(img)
     return nothing
 end
+
+function RLCore.Experiment(
+    ::Val{:JuliaRL},
+    ::Val{:BasicDQN},
+    ::Val{:RayCastWorld},
+    ::Nothing;
+    seed = 123,
+    save_dir = nothing,
+)
+    if isnothing(save_dir)
+        t = Dates.format(Dates.now(), "yyyy_mm_dd_HH_MM_SS")
+        save_dir = joinpath(pwd(), "checkpoints", "JuliaRL_BasicDQN_RayCastWorld$(t)")
+    end
+    log_dir = joinpath(save_dir, "tb_log")
+    lg = TBL.TBLogger(log_dir, min_level = Logging.Info)
+    rng = StableRNGs.StableRNG(seed)
+
+    inner_env = RayCastWorld(rng = rng)
+    action_space_mapping = x -> Base.OneTo(length(RLBase.action_space(inner_env)))
+    action_mapping = i -> RLBase.action_space(inner_env)[i]
+    env = RLEnvs.ActionTransformedEnv(
+        inner_env,
+        action_space_mapping = action_space_mapping,
+        action_mapping = action_mapping,
+    )
+    env = RLEnvs.StateOverriddenEnv(env, x -> vec(Float32.(x)))
+    env = RLEnvs.RewardOverriddenEnv(env, x -> x - convert(typeof(x), 0.01))
+    env = RLEnvs.MaxTimeoutEnv(env, 100)
+
+    ns, na = length(RLBase.state(env)), length(RLBase.action_space(env))
+    agent = RLCore.Agent(
+        policy = RLCore.QBasedPolicy(
+            learner = RLZoo.BasicDQNLearner(
+                approximator = RLCore.NeuralNetworkApproximator(
+                    model = Flux.Chain(
+                        Flux.Dense(ns, 128, Flux.relu; initW = Flux.glorot_uniform(rng)),
+                        # Flux.Dense(128, 128, relu; initW = Flux.glorot_uniform(rng)),
+                        Flux.Dense(128, na; initW = Flux.glorot_uniform(rng)),
+                    ) |> Flux.cpu,
+                    optimizer = Flux.ADAM(),
+                ),
+                batch_size = 16,
+                min_replay_history = 10,
+                loss_func = Flux.Losses.huber_loss,
+                rng = rng,
+            ),
+            explorer = RLCore.EpsilonGreedyExplorer(
+                kind = :exp,
+                ϵ_stable = 0.01,
+                decay_steps = 500,
+                rng = rng,
+            ),
+        ),
+        trajectory = RLCore.CircularArraySARTTrajectory(
+            capacity = 1000,
+            state = Vector{Float32} => (ns,),
+        ),
+    )
+
+    stop_condition = RLCore.StopAfterStep(1000)
+
+    total_reward_per_episode = RLCore.TotalRewardPerEpisode()
+    time_per_step = RLCore.TimePerStep()
+    hook = RLCore.ComposedHook(
+        total_reward_per_episode,
+        time_per_step,
+        RLCore.DoEveryNStep() do t, agent, env
+            Logging.with_logger(lg) do
+                @info "training" loss = agent.policy.learner.loss
+                @info "training" reward = RLBase.reward(env)
+            end
+        end,
+        RLCore.DoEveryNEpisode() do t, agent, env
+            Logging.with_logger(lg) do
+                @info "training" total_reward = total_reward_per_episode.rewards[end] log_step_increment = 0
+            end
+        end,
+    )
+
+    description = """
+    This experiment uses three dense layers to approximate the Q value.
+    The testing environment is EmptyRoom.
+    You can view the runtime logs with `tensorboard --logdir $log_dir`.
+    Some useful statistics are stored in the `hook` field of this experiment.
+    """
+
+    RLCore.Experiment(agent, env, stop_condition, hook, description)
+end
+
+experiment = RLCore.Experiment(Val{:JuliaRL}(), Val{:BasicDQN}(), Val{:RayCastWorld}(), nothing)
+out = RLCore.run(experiment)
