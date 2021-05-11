@@ -98,7 +98,7 @@ function RayCastWorld(;
         agent_pos = SA.SVector(convert(T, 1.5), convert(T, 2.5)),
         agent_dir = SA.SVector(cos(convert(T, pi / 6)), sin(convert(T, pi / 6))),
         agent_radius_wu = convert(T, 0.25),
-        num_rays = 128,
+        num_rays = 64,
         semi_fov = convert(T, pi / 6),
         position_increment = convert(T, 0.1),
         theta_increment = convert(T, pi / 60),
@@ -178,6 +178,7 @@ function (env::RayCastWorld{T})(action::GW.AbstractMoveAction) where {T}
     if RC.is_agent_colliding(tile_map, new_agent_pos, env.wu_per_tu, env.tile_half_side_wu, env.agent_radius_wu, env.height_world_wu, GW.GOAL)
         set_done!(env, true)
         set_reward!(env, get_terminal_reward(env))
+        @info "reward = $(RLBase.reward(env))"
     elseif RC.is_agent_colliding(tile_map, new_agent_pos, env.wu_per_tu, env.tile_half_side_wu, env.agent_radius_wu, env.height_world_wu, GW.WALL)
         set_done!(env, false)
         set_reward!(env, zero(T))
@@ -232,6 +233,22 @@ function display(env::RayCastWorld)
     return nothing
 end
 
+function state_transform(img)
+    height_img = size(img, 1)
+    width_img = size(img, 2)
+    rgb = Array{Float32, 3}(undef, height_img, width_img, 3)
+    for j in 1:width_img
+        for i in 1:height_img
+            color = reinterpret(CT.RGB24, img[i, j])
+            rgb[i, j, 1] = Float32(CT.red(color))
+            rgb[i, j, 2] = Float32(CT.green(color))
+            rgb[i, j, 3] = Float32(CT.blue(color))
+        end
+    end
+
+    return vec(rgb)
+end
+
 function RLCore.Experiment(
     ::Val{:JuliaRL},
     ::Val{:BasicDQN},
@@ -256,9 +273,10 @@ function RLCore.Experiment(
         action_space_mapping = action_space_mapping,
         action_mapping = action_mapping,
     )
-    env = RLEnvs.StateOverriddenEnv(env, x -> vec(Float32.(x)))
+    # env = RLEnvs.StateOverriddenEnv(env, x -> vec(Float32.(x)))
+    env = RLEnvs.StateOverriddenEnv(env, state_transform)
     env = RLEnvs.RewardOverriddenEnv(env, x -> x - convert(typeof(x), 0.01))
-    env = RLEnvs.MaxTimeoutEnv(env, 100)
+    env = RLEnvs.MaxTimeoutEnv(env, 500)
 
     ns, na = length(RLBase.state(env)), length(RLBase.action_space(env))
     agent = RLCore.Agent(
@@ -266,9 +284,9 @@ function RLCore.Experiment(
             learner = RLZoo.BasicDQNLearner(
                 approximator = RLCore.NeuralNetworkApproximator(
                     model = Flux.Chain(
-                        Flux.Dense(ns, 128, Flux.relu; initW = Flux.glorot_uniform(rng)),
-                        # Flux.Dense(128, 128, relu; initW = Flux.glorot_uniform(rng)),
-                        Flux.Dense(128, na; initW = Flux.glorot_uniform(rng)),
+                        Flux.Dense(ns, 512, Flux.relu; initW = Flux.glorot_uniform(rng)),
+                        Flux.Dense(512, 64, Flux.relu; initW = Flux.glorot_uniform(rng)),
+                        Flux.Dense(64, na; initW = Flux.glorot_uniform(rng)),
                     ) |> Flux.cpu,
                     optimizer = Flux.ADAM(),
                 ),
@@ -290,7 +308,7 @@ function RLCore.Experiment(
         ),
     )
 
-    stop_condition = RLCore.StopAfterStep(1000)
+    stop_condition = RLCore.StopAfterStep(10000)
 
     total_reward_per_episode = RLCore.TotalRewardPerEpisode()
     time_per_step = RLCore.TimePerStep()
