@@ -4,6 +4,7 @@ import GridWorlds as GW
 import MiniFB as MFB
 import StaticArrays as SA
 import ReinforcementLearningBase as RLBase
+import Random
 
 include("utils.jl")
 include("geometry.jl")

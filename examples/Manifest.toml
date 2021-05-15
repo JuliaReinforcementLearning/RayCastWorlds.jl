@@ -210,7 +210,7 @@ deps = ["Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[RayCaster]]
-deps = ["GridWorlds", "MiniFB", "StaticArrays"]
+deps = ["GridWorlds", "MiniFB", "Random", "ReinforcementLearningBase", "StaticArrays"]
 path = ".."
 uuid = "a48166eb-4254-4927-9a4f-eb5d9658c5fa"
 version = "0.0.1"
