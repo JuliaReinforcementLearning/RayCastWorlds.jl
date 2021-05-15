@@ -3,6 +3,9 @@ import MiniFB as MFB
 import RayCaster as RC
 import StaticArrays as SA
 import Random
+import ColorTypes as CT
+import ImageMagick
+import FileIO
 import ReinforcementLearningBase as RLBase
 
 const T = Float32
@@ -39,6 +42,7 @@ function keyboard_callback(window, key, mod, isPressed)::Cvoid
         reward = RLBase.reward(env)
         global total_reward += reward
         is_terminated = RLBase.is_terminated(env)
+        push!(image_sequence, RC.get_combined_view(env))
 
         println("step_number = $step_number")
         println("action = $action")
@@ -53,11 +57,14 @@ end
 
 function play(env::RC.SingleRoom)
     cv = RC.get_combined_view(env)
+    push!(image_sequence, RC.get_combined_view(env))
+
     height_cv_pu, width_cv_pu = size(cv)
     fb_cv = zeros(UInt32, width_cv_pu, height_cv_pu)
 
     window = MFB.mfb_open("Combined View", width_cv_pu, height_cv_pu)
     MFB.mfb_set_keyboard_callback(window, keyboard_callback)
+
     permutedims!(fb_cv, RC.get_combined_view(env), (2, 1))
 
     while MFB.mfb_wait_sync(window)
@@ -74,3 +81,11 @@ function play(env::RC.SingleRoom)
 end
 
 play(env)
+
+const gif = zeros(UInt32, size(RC.get_combined_view(env))..., length(image_sequence))
+
+for (i, image) in enumerate(image_sequence)
+    gif[:, :, i] .= image
+end
+
+FileIO.save("animation.gif", reinterpret.(CT.RGB24, gif), fps = 12)
