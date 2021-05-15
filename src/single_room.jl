@@ -123,7 +123,6 @@ function (env::SingleRoom{T})(action::GW.AbstractMoveAction) where {T}
     if is_agent_colliding(tile_map, new_agent_pos, env.wu_per_tu, env.tile_half_side_wu, env.agent_radius_wu, env.height_world_wu, GW.GOAL)
         set_done!(env, true)
         set_reward!(env, get_terminal_reward(env))
-        @info "reward = $(RLBase.reward(env))"
     elseif is_agent_colliding(tile_map, new_agent_pos, env.wu_per_tu, env.tile_half_side_wu, env.agent_radius_wu, env.height_world_wu, GW.WALL)
         set_done!(env, false)
         set_reward!(env, zero(T))
