@@ -971,7 +971,7 @@ uuid = "c84ed2f1-dad5-54f0-aa8e-dbefe2724439"
 version = "0.4.0"
 
 [[RayCaster]]
-deps = ["GridWorlds", "MiniFB", "StaticArrays"]
+deps = ["GridWorlds", "MiniFB", "ReinforcementLearningBase", "StaticArrays"]
 path = "../.."
 uuid = "a48166eb-4254-4927-9a4f-eb5d9658c5fa"
 version = "0.0.1"
