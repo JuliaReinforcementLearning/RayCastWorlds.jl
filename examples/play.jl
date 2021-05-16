@@ -89,5 +89,5 @@ for (i, image) in enumerate(image_sequence)
     gif[:, :, i] .= image
 end
 
-file_name = joinpath("output", Dates.format(Dates.now(), "yyyy_mm_dd_HH_MM_SS")) * ".gif"
+file_name = joinpath("output/play", Dates.format(Dates.now(), "yyyy_mm_dd_HH_MM_SS")) * ".gif"
 FileIO.save(file_name, reinterpret.(CT.RGB24, gif), fps = 24)
