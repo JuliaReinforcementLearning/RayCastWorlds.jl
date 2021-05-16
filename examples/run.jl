@@ -6,6 +6,7 @@ import Random
 import ColorTypes as CT
 import ImageMagick
 import FileIO
+import Dates
 import ReinforcementLearningBase as RLBase
 
 const T = Float32
@@ -88,4 +89,5 @@ for (i, image) in enumerate(image_sequence)
     gif[:, :, i] .= image
 end
 
-FileIO.save("animation.gif", reinterpret.(CT.RGB24, gif), fps = 12)
+file_name = joinpath("output", Dates.format(Dates.now(), "yyyy_mm_dd_HH_MM_SS")) * ".gif"
+FileIO.save(file_name, reinterpret.(CT.RGB24, gif), fps = 24)
