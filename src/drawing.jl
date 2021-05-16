@@ -1,4 +1,6 @@
-# colors
+#####
+##### colors
+#####
 
 const black = MFB.mfb_rgb(0, 0, 0)
 const white = MFB.mfb_rgb(255, 255, 255)
@@ -9,7 +11,9 @@ const green = MFB.mfb_rgb(0, 255, 0)
 const blue = MFB.mfb_rgb(0, 0, 255)
 const dark_blue = MFB.mfb_rgb(0, 0, 127)
 
-# simple drawing method
+#####
+##### simple drawing methods
+#####
 
 function draw_rectangle!(image::AbstractMatrix, top_left_i::Integer, top_left_j::Integer, bottom_right_i::Integer, bottom_right_j::Integer, value)
     image[top_left_i:bottom_right_i, top_left_j:bottom_right_j] .= value
@@ -58,10 +62,14 @@ function draw_line!(image::AbstractMatrix, i0::Int, j0::Int, i1::Int, j1::Int, v
     return nothing
 end
 
+#####
+##### draw tile map
+#####
+
 function draw_tile_map!(image::AbstractMatrix, tile_map)
 
-    height_tm_tu = size(tile_map, 2)
-    width_tm_tu = size(tile_map, 3)
+    height_tm_tu = GW.get_height(tile_map)
+    width_tm_tu = GW.get_width(tile_map)
 
     pu_per_tu = size(image, 1) ÷ height_tm_tu
 
@@ -94,20 +102,23 @@ function get_tile_color(tile_map, i::Integer, j::Integer)
 end
 
 function draw_tile_map_boundaries!(image::AbstractMatrix, pu_per_tu, color)
-    height_tv_pu = size(image, 1)
-    width_tv_pu = size(image, 2)
+    height_image_pu = size(image, 1)
+    width_image_pu = size(image, 2)
 
-    image[1:pu_per_tu:height_tv_pu, :] .= color
-    image[:, 1:pu_per_tu:width_tv_pu] .= color
+    image[1:pu_per_tu:height_image_pu, :] .= color
+    image[:, 1:pu_per_tu:width_image_pu] .= color
 
     return nothing
 end
 
-# cast ray
+#####
+##### cast single ray
+#####
 
-function cast_ray(tm, ray_dir, pos_wu, wu_per_tu)
+function cast_ray(tile_map, ray_dir, pos_wu, wu_per_tu)
     T = typeof(wu_per_tu)
-    height_tm_tu = size(tm, 2)
+    # height_tm_tu = size(tm, 2)
+    height_tm_tu = GW.get_height(tile_map)
     pos_x, pos_y = pos_wu
     map_x = wu_to_tu(pos_x, wu_per_tu) - 1
     map_y = wu_to_tu(pos_y, wu_per_tu) - 1
@@ -151,7 +162,7 @@ function cast_ray(tm, ray_dir, pos_wu, wu_per_tu)
         end
 
         hit_pos_tu = map_to_tu((map_x, map_y), height_tm_tu)
-        if tm[GW.WALL, hit_pos_tu...] || tm[GW.GOAL, hit_pos_tu...]
+        if tile_map[GW.WALL, hit_pos_tu...] || tile_map[GW.GOAL, hit_pos_tu...]
             hit = 1
         end
     end
@@ -159,60 +170,65 @@ function cast_ray(tm, ray_dir, pos_wu, wu_per_tu)
     return dist, side, hit_pos_tu
 end
 
-# draw av
+#####
+##### draw agent view
+#####
 
-function draw_av!(av, tm, agent_position, agent_direction, semi_fov, num_rays, wu_per_tu)
-    height_av_pu = size(av, 1)
-    ray_dirs = get_rays(agent_direction, semi_fov, num_rays)
+function draw_av!(image, tile_map, position, direction, semi_fov, num_rays, wu_per_tu)
+    height_image_pu = size(image, 1)
+    ray_dirs = get_rays(direction, semi_fov, num_rays)
 
     for (ray_idx, ray_dir) in enumerate(ray_dirs)
-        dist, side, hit_pos_tu = cast_ray(tm, ray_dir, agent_position, wu_per_tu)
+        dist, side, hit_pos_tu = cast_ray(tile_map, ray_dir, position, wu_per_tu)
 
-        per_dist = dist * sum(agent_direction .* ray_dir)
-        height_line_pu = floor(Int, height_av_pu / per_dist)
+        per_dist = dist * sum(direction .* ray_dir)
+        height_line_pu = floor(Int, height_image_pu / per_dist)
 
         idx = num_rays - ray_idx + 1
 
-        if tm[GW.WALL, hit_pos_tu...] && side == 1
+        if tile_map[GW.WALL, hit_pos_tu...] && side == 1
             color = dark_gray
-        elseif tm[GW.WALL, hit_pos_tu...] && side == 0
+        elseif tile_map[GW.WALL, hit_pos_tu...] && side == 0
             color = gray
-        elseif tm[GW.GOAL, hit_pos_tu...] && side == 1
+        elseif tile_map[GW.GOAL, hit_pos_tu...] && side == 1
             color = dark_blue
-        elseif tm[GW.GOAL, hit_pos_tu...] && side == 0
+        elseif tile_map[GW.GOAL, hit_pos_tu...] && side == 0
             color = blue
         end
 
-        if height_line_pu >= height_av_pu - 1
-            av[:, idx] .= color
+        if height_line_pu >= height_image_pu - 1
+            image[:, idx] .= color
         else
-            padding_pu = (height_av_pu - height_line_pu) ÷ 2
-            av[1:padding_pu, idx] .= white
-            av[padding_pu + 1 : end - padding_pu, idx] .= color
-            av[end - padding_pu + 1 : end, idx] .= black
+            padding_pu = (height_image_pu - height_line_pu) ÷ 2
+            image[1:padding_pu, idx] .= white
+            image[padding_pu + 1 : end - padding_pu, idx] .= color
+            image[end - padding_pu + 1 : end, idx] .= black
         end
     end
 
     return nothing
 end
 
-# draw tv
+#####
+##### draw top view
+#####
 
-function draw_tv!(tv, tm, agent_position, agent_direction, semi_fov, num_rays, wu_per_tu, pu_per_tu, pu_per_wu, height_world_wu, radius_pu)
-    draw_tile_map!(tv, tm)
-    draw_tile_map_boundaries!(tv, pu_per_tu, gray)
-    # draw_agent
-    draw_circle!(tv, get_agent_center_pu(agent_position, pu_per_wu, height_world_wu)..., radius_pu, green)
+function draw_tv!(image, tile_map, position, direction, semi_fov, num_rays, wu_per_tu, pu_per_tu, pu_per_wu, height_world_wu, radius_pu)
+    # draw tile map
+    draw_tile_map!(image, tile_map)
+    draw_tile_map_boundaries!(image, pu_per_tu, gray)
 
-    # draw_rays
-    ray_start_pu = get_agent_center_pu(agent_position, pu_per_wu, height_world_wu)
-    ray_dirs = get_rays(agent_direction, semi_fov, num_rays)
+    # draw agent
+    draw_circle!(image, get_agent_center_pu(position, pu_per_wu, height_world_wu)..., radius_pu, green)
 
+    # draw rays
+    ray_start_pu = get_agent_center_pu(position, pu_per_wu, height_world_wu)
+    ray_dirs = get_rays(direction, semi_fov, num_rays)
     for (ray_idx, ray_dir) in enumerate(ray_dirs)
-        dist, side, hit_pos_tu = cast_ray(tm, ray_dir, agent_position, wu_per_tu)
-        ray_stop_wu = agent_position + dist * ray_dir
+        dist, side, hit_pos_tu = cast_ray(tile_map, ray_dir, position, wu_per_tu)
+        ray_stop_wu = position + dist * ray_dir
         ray_stop_pu = wu_to_pu(ray_stop_wu, pu_per_wu, height_world_wu)
-        draw_line!(tv, ray_start_pu..., ray_stop_pu..., red)
+        draw_line!(image, ray_start_pu..., ray_stop_pu..., red)
     end
 
     return nothing
