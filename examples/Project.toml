@@ -1,7 +1,12 @@
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 GridWorlds = "e15a9946-cd7f-4d03-83e2-6c30bacb0043"
+ImageMagick = "6218d12a-5da1-5696-b52f-db25d2ecc6d1"
 MiniFB = "cc649173-1898-4bb8-8a16-ca5f88bd87d9"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RayCaster = "a48166eb-4254-4927-9a4f-eb5d9658c5fa"
 ReinforcementLearningBase = "e575027e-6cd6-5018-9292-cdc6200d2b44"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
