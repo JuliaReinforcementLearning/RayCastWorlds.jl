@@ -41,3 +41,5 @@ function simulate_random_policy()
 
     return env
 end
+
+env = simulate_random_policy();
