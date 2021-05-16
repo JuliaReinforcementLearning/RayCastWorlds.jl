@@ -1,13 +1,13 @@
-import GridWorlds as GW
-import MiniFB as MFB
-import RayCaster as RC
-import StaticArrays as SA
-import Random
 import ColorTypes as CT
-import ImageMagick
-import FileIO
 import Dates
+import FileIO
+import GridWorlds as GW
+import ImageMagick
+import MiniFB as MFB
+import Random
+import RayCaster as RC
 import ReinforcementLearningBase as RLBase
+import StaticArrays as SA
 
 const T = Float32
 const seed = 123
@@ -89,5 +89,5 @@ for (i, image) in enumerate(image_sequence)
     gif[:, :, i] .= image
 end
 
-file_name = joinpath("output", Dates.format(Dates.now(), "yyyy_mm_dd_HH_MM_SS")) * ".gif"
+file_name = joinpath("output/play", Dates.format(Dates.now(), "yyyy_mm_dd_HH_MM_SS")) * ".gif"
 FileIO.save(file_name, reinterpret.(CT.RGB24, gif), fps = 24)

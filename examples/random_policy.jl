@@ -1,14 +1,10 @@
-import RayCaster as RC
 import ColorTypes as CT
-
-import ReinforcementLearningBase as RLBase
-
-import StableRNGs
 import Dates
-import Random
 import FileIO
 import ImageMagick
-import FixedPointNumbers
+import Random
+import RayCaster as RC
+import ReinforcementLearningBase as RLBase
 
 get_img(env::RC.SingleRoom) = reinterpret.(CT.RGB24, RC.get_combined_view(env))
 
@@ -21,7 +17,7 @@ end
 function simulate_random_policy()
     seed = 123
     max_steps = 240
-    rng = StableRNGs.StableRNG(seed)
+    rng = Random.MersenneTwister(seed)
 
     env = RC.SingleRoom(rng = rng)
 
@@ -40,7 +36,10 @@ function simulate_random_policy()
         gif[:, :, i] .= RC.get_combined_view(env)
     end
 
-    FileIO.save("animation.gif", reinterpret.(CT.RGB24, gif), fps = 12)
+    file_name = joinpath("output/random_policy", Dates.format(Dates.now(), "yyyy_mm_dd_HH_MM_SS")) * ".gif"
+    FileIO.save(file_name, reinterpret.(CT.RGB24, gif), fps = 24)
 
     return env
 end
+
+env = simulate_random_policy();
