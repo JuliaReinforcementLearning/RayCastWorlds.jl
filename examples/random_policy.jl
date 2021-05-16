@@ -6,11 +6,11 @@ import Random
 import RayCaster as RC
 import ReinforcementLearningBase as RLBase
 
-get_img(env::RC.SingleRoom) = reinterpret.(CT.RGB24, RC.get_combined_view(env))
+get_image(env::RC.SingleRoom) = reinterpret.(CT.RGB24, RC.get_combined_view(env))
 
 function display(env::RC.SingleRoom)
-    img = get_img(env)
-    IV.imshow(img)
+    image = get_image(env)
+    IV.imshow(image)
     return nothing
 end
 

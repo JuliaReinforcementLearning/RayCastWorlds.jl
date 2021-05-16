@@ -1,53 +1,13 @@
-mutable struct Agent{T}
-    position::SA.SVector{2, T}
-    direction::SA.SVector{2, T}
-    camera_plane::SA.SVector{2, T}
-end
-
-struct World{O, T}
-    tile_map::GW.GridWorldBase{O}
-    height::T
-    width::T
-    agent::Agent{T}
-end
-
-function generate_tile_map(height = 8, width = 8)
-    objects = (GW.WALL,)
-    tile_map = GW.GridWorldBase(objects, height, width)
-
-    room = GW.Room(CartesianIndex(1, 1), height, width)
-    GW.place_room!(tile_map, room)
-
-    return tile_map
-end
-
-function generate_tile_map(tm_layout::Matrix{Int})
-    height = size(tm_layout, 1)
-    width = size(tm_layout, 2)
-    objects = (GW.WALL, GW.GOAL)
-    tile_map = GW.GridWorldBase(objects, height, width)
-
-    for pos in keys(tm_layout)
-        if tm_layout[pos] == 1
-            tile_map[GW.WALL, pos] = true
-        elseif tm_layout[pos] == 2
-            tile_map[GW.GOAL, pos] = true
-        end
-    end
-
-    return tile_map
-end
-
-function is_agent_colliding(tm, center_wu, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu)
-    height_tm_tu = size(tm, 2)
+function is_agent_colliding(tile_map, position_wu, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu)
+    height_tile_map_tu = GW.get_height(tile_map)
     square = StdSquare(tile_half_side_wu)
     circle = StdCircle(radius_wu)
-    return any(pos -> (tm[GW.WALL, pos] || tm[GW.GOAL, pos]) && is_colliding(square, circle, center_wu .- get_tile_center_wu(pos.I, wu_per_tu, height_tm_tu, tile_half_side_wu)), get_agent_region_tu(center_wu, radius_wu, wu_per_tu, height_world_wu))
+    return any(pos -> (tile_map[GW.WALL, pos] || tile_map[GW.GOAL, pos]) && is_colliding(square, circle, position_wu .- get_tile_center_wu(pos.I, wu_per_tu, height_tile_map_tu, tile_half_side_wu)), get_agent_region_tu(position_wu, radius_wu, wu_per_tu, height_world_wu))
 end
 
-function is_agent_colliding(tm, center_wu, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu, object)
-    height_tm_tu = size(tm, 2)
+function is_agent_colliding(tile_map, position_wu, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu, object)
+    height_tile_map_tu = GW.get_height(tile_map)
     square = StdSquare(tile_half_side_wu)
     circle = StdCircle(radius_wu)
-    return any(pos -> tm[object, pos] && is_colliding(square, circle, center_wu .- get_tile_center_wu(pos.I, wu_per_tu, height_tm_tu, tile_half_side_wu)), get_agent_region_tu(center_wu, radius_wu, wu_per_tu, height_world_wu))
+    return any(pos -> tile_map[object, pos] && is_colliding(square, circle, position_wu .- get_tile_center_wu(pos.I, wu_per_tu, height_tile_map_tu, tile_half_side_wu)), get_agent_region_tu(position_wu, radius_wu, wu_per_tu, height_world_wu))
 end
