@@ -2,9 +2,9 @@ module RayCaster
 
 import GridWorlds as GW
 import MiniFB as MFB
-import StaticArrays as SA
-import ReinforcementLearningBase as RLBase
 import Random
+import ReinforcementLearningBase as RLBase
+import StaticArrays as SA
 
 include("utils.jl")
 include("geometry.jl")
