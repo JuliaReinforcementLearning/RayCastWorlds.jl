@@ -1,4 +1,3 @@
-import RayCaster as RC
 import StaticArrays as SA
 import MiniFB as MFB
 

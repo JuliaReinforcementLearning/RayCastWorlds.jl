@@ -3,12 +3,12 @@ import Dates
 import FileIO
 import ImageMagick
 import Random
-import RayCaster as RC
+import RayCastWorlds as RCW
 import ReinforcementLearningBase as RLBase
 
-get_image(env::RC.SingleRoom) = reinterpret.(CT.RGB24, RC.get_combined_view(env))
+get_image(env::RCW.SingleRoom) = reinterpret.(CT.RGB24, RCW.get_combined_view(env))
 
-function display(env::RC.SingleRoom)
+function display(env::RCW.SingleRoom)
     image = get_image(env)
     IV.imshow(image)
     return nothing
@@ -19,9 +19,9 @@ function simulate_random_policy()
     max_steps = 240
     rng = Random.MersenneTwister(seed)
 
-    env = RC.SingleRoom(rng = rng)
+    env = RCW.SingleRoom(rng = rng)
 
-    gif = zeros(UInt32, size(RC.get_combined_view(env))..., max_steps)
+    gif = zeros(UInt32, size(RCW.get_combined_view(env))..., max_steps)
     RLBase.reset!(env)
     reward = RLBase.reward(env)
 
@@ -33,7 +33,7 @@ function simulate_random_policy()
         env(action)
         reward = RLBase.reward(env)
         total_reward += RLBase.reward(env)
-        gif[:, :, i] .= RC.get_combined_view(env)
+        gif[:, :, i] .= RCW.get_combined_view(env)
     end
 
     file_name = joinpath("output/random_policy", Dates.format(Dates.now(), "yyyy_mm_dd_HH_MM_SS")) * ".gif"

@@ -1,4 +1,4 @@
-module RayCaster
+module RayCastWorlds
 
 import GridWorlds as GW
 import MiniFB as MFB
