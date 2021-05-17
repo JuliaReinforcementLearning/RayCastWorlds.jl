@@ -1,6 +1,6 @@
-using RayCaster
+using RayCastWorlds
 using Test
 
-@testset "RayCaster.jl" begin
+@testset "RayCastWorlds.jl" begin
     # Write your tests here.
 end
