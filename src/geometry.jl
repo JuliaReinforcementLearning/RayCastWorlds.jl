@@ -8,27 +8,18 @@ struct StdSquare{T}
     half_side::T
 end
 
-get_half_side(square::StdSquare) = square.half_side
-
 struct StdCircle{T}
     radius::T
 end
 
-get_radius(circle::StdCircle) = circle.radius
-
 function get_projection(square::StdSquare, position::SA.SVector)
-    half_side = get_half_side(square)
+    half_side = square.half_side
     return clamp.(position, -half_side, half_side)
 end
 
 function is_colliding(square::StdSquare, circle::StdCircle, position::SA.SVector)
     projection = get_projection(square, position)
     vec = position - projection
-    radius = get_radius(circle)
+    radius = circle.radius
     return sum(vec .^ 2) < radius * radius
-end
-
-function get_rays(direction::SA.SVector, semi_fov, num_rays)
-    angle = atan(direction[2], direction[1])
-    return map(theta -> SA.SVector(cos(theta), sin(theta)), range(angle - semi_fov, angle + semi_fov, length = num_rays))
 end
