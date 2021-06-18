@@ -11,51 +11,35 @@ const green = MFB.mfb_rgb(0, 255, 0)
 const blue = MFB.mfb_rgb(0, 0, 255)
 const dark_blue = MFB.mfb_rgb(0, 0, 127)
 
+const BLOCK_EMPTY_SHADED = ' '
+const BLOCK_QUARTER_SHADED = '░'
+const BLOCK_HALF_SHADED = '▒'
+const BLOCK_THREE_QUARTER_SHADED = '▓'
+const BLOCK_FULL_SHADED = '█'
+
 #####
 ##### draw tile map
 #####
 
-function draw_tile_map!(image::AbstractMatrix, tile_map)
+function SD.draw!(image, tile_map, colors)
 
-    height_tm_tu = GW.get_height(tile_map)
-    width_tm_tu = GW.get_width(tile_map)
+    num_objects, height_tile_map, width_tile_map = size(tile_map)
 
-    pu_per_tu = size(image, 1) ÷ height_tm_tu
+    pu_per_tu = size(image, 1) ÷ height_tile_map
 
-    for j in 1:width_tm_tu
-        for i in 1:height_tm_tu
-            color = get_tile_color(tile_map, i, j)
+    for j in 1:width_tile_map
+        for i in 1:height_tile_map
+            i_top_left = (i - 1) * pu_per_tu + 1
+            j_top_left = (j - 1) * pu_per_tu + 1
 
-            top_left_i = get_tile_start_pu(i, pu_per_tu)
-            top_left_j = get_tile_start_pu(j, pu_per_tu)
-            bottom_right_i = get_tile_stop_pu(i, pu_per_tu)
-            bottom_right_j = get_tile_stop_pu(j, pu_per_tu)
+            shape = SD.FilledRectangle(top_left_i, top_left_j, pu_per_tu, pu_per_tu)
 
-            draw_rectangle!(image, top_left_i, top_left_j, bottom_right_i, bottom_right_j, color)
+            object_id = findfirst(@view tile_map[:, i, j])
+            color = CHARACTERS[object_id]
+
+            SD.draw!(image, shape, color)
         end
     end
-
-    return nothing
-end
-
-function get_tile_color(tile_map, i::Integer, j::Integer)
-    if tile_map[GW.WALL, i, j]
-        color = white
-    elseif tile_map[GW.GOAL, i, j]
-        color = blue
-    else
-        color = black
-    end
-
-    return color
-end
-
-function draw_tile_map_boundaries!(image::AbstractMatrix, pu_per_tu, color)
-    height_image_pu = size(image, 1)
-    width_image_pu = size(image, 2)
-
-    image[1:pu_per_tu:height_image_pu, :] .= color
-    image[:, 1:pu_per_tu:width_image_pu] .= color
 
     return nothing
 end
