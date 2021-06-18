@@ -8,7 +8,6 @@ import ReinforcementLearningBase as RLBase
 import SimpleDraw as SD
 import StaticArrays as SA
 
-include("utils.jl")
 include("geometry.jl")
 include("units.jl")
 include("drawing.jl")
