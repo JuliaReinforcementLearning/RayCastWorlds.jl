@@ -21,7 +21,7 @@ const BLOCK_FULL_SHADED = '█'
 ##### draw tile map
 #####
 
-function SD.draw!(image, tile_map, colors)
+function draw_tile_map!(image, tile_map, colors)
 
     num_objects, height_tile_map, width_tile_map = size(tile_map)
 
@@ -48,41 +48,40 @@ end
 ##### cast single ray
 #####
 
-function cast_ray(tile_map, ray_dir, pos_wu, wu_per_tu)
-    T = typeof(wu_per_tu)
-    # height_tm_tu = size(tm, 2)
-    height_tm_tu = GW.get_height(tile_map)
-    pos_x, pos_y = pos_wu
-    map_x = wu_to_tu(pos_x, wu_per_tu) - 1
-    map_y = wu_to_tu(pos_y, wu_per_tu) - 1
+function cast_ray(obstacle_map, ray_start_position::AbstractArray{T, 1}, ray_direction) where {T}
+    height_obstacle_map = size(obstacle_map, 1)
 
-    ray_dir_x, ray_dir_y = ray_dir
-    delta_dist_x = abs(1 / ray_dir_x)
-    delta_dist_y = abs(1 / ray_dir_y)
+    ray_start_position_x, ray_start_position_y = ray_start_position
+    map_x = floor(Int, ray_start_position_x)
+    map_y = floor(Int, ray_start_position_y)
 
-    if ray_dir_x < zero(T)
+    ray_direction_x, ray_direction_y = ray_direction
+    delta_dist_x = abs(1 / ray_direction_x)
+    delta_dist_y = abs(1 / ray_direction_y)
+
+    if ray_direction_x < zero(T)
         step_x = -1
-        side_dist_x = (pos_x - map_x) * delta_dist_x
+        side_dist_x = (ray_start_position_x - map_x) * delta_dist_x
     else
         step_x = 1
-        side_dist_x = (map_x + 1 - pos_x) * delta_dist_x
+        side_dist_x = (map_x + 1 - ray_start_position_x) * delta_dist_x
     end
 
-    if ray_dir_y < zero(T)
+    if ray_direction_y < zero(T)
         step_y = -1
-        side_dist_y = (pos_y - map_y) * delta_dist_y
+        side_dist_y = (ray_start_position_y - map_y) * delta_dist_y
     else
         step_y = 1
-        side_dist_y = (map_y + 1 - pos_y) * delta_dist_y
+        side_dist_y = (map_y + 1 - ray_start_position_y) * delta_dist_y
     end
 
-    hit = 0
-    dist = Inf
+    has_hit = false
+    side_dist = Inf
     hit_pos_tu = (1, 1)
     side = 0
 
-    while (hit == 0)
-        dist = min(side_dist_x, side_dist_y)
+    while !has_hit
+        side_dist = min(side_dist_x, side_dist_y)
 
         if (side_dist_x < side_dist_y)
             side_dist_x += delta_dist_x
@@ -95,12 +94,12 @@ function cast_ray(tile_map, ray_dir, pos_wu, wu_per_tu)
         end
 
         hit_pos_tu = map_to_tu((map_x, map_y), height_tm_tu)
-        if tile_map[GW.WALL, hit_pos_tu...] || tile_map[GW.GOAL, hit_pos_tu...]
-            hit = 1
-        end
+        i_obstacle_map = height_obstacle_map - map_y
+        j_obstacle_map = map_x + 1
+        has_hit = obstacle_map[i_obstacle_map, j_obstacle_map]
     end
 
-    return dist, side, hit_pos_tu
+    return side_dist, side, CartesianIndex(i_obstacle_map, j_obstacle_map)
 end
 
 #####
