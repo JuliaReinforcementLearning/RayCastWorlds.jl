@@ -30,15 +30,20 @@ end
 function show_image(io::IO, ::MIME"text/plain", image)
     height, width = size(image)
 
+    str = ""
     for i in 1:height
         for j in 1:width
-            print(io, image[i, j])
+            # print(io, image[i, j])
+            str = str * image[i, j]
         end
 
         if i < height
-            print(io, "\n")
+            # print(io, "\n")
+            str = str * "\n"
         end
     end
+
+    print(io, str)
 
     return nothing
 end
