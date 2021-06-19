@@ -26,7 +26,7 @@ struct Game{T}
     position_increment_wu::T
 
     field_of_view_au::Int
-    num_rays::Int
+    # num_rays::Int
     top_view::Array{String, 2}
     camera_view::Array{String, 2}
 
@@ -37,17 +37,18 @@ function Game(;
         T = Float32,
         height_tile_map_tu = 8,
         width_tile_map_tu = 8,
-        num_directions = 16,
-        field_of_view_au = num_directions ÷ 4,
-        num_rays = num_directions ÷ 4,
+        num_directions = 128, # angles go from 0 to num_directions - 1 (0 corresponding to positive x-axes)
+        field_of_view_au = 33,
 
         player_position_wu = SA.MVector(convert(T, height_tile_map_tu / 2), convert(T, width_tile_map_tu / 2)),
-        player_direction_au = num_directions ÷ 4,
+        player_direction_au = num_directions ÷ 8,
         player_radius_wu = convert(T, 1 / 8),
         position_increment_wu = convert(T, 1 / 8),
 
         pu_per_tu = 4,
     )
+
+    @assert isodd(field_of_view_au)
 
     tile_map = falses(NUM_OBJECTS, height_tile_map_tu, width_tile_map_tu)
     tile_map[BACKROUND, :, :] .= true
@@ -57,11 +58,11 @@ function Game(;
     tile_map[WALL, height_tile_map_tu, :] .= true
 
     top_view = Array{String}(undef, height_tile_map_tu * pu_per_tu, width_tile_map_tu * pu_per_tu)
-    camera_view = Array{String}(undef, num_rays, num_rays)
+    camera_view = Array{String}(undef, field_of_view_au, field_of_view_au)
 
     directions_wu = Array{T}(undef, 2, num_directions)
     for i in 1:num_directions
-        theta = i * 2 * pi / num_directions
+        theta = (i - 1) * 2 * pi / num_directions
         directions_wu[1, i] = convert(T, cos(theta))
         directions_wu[2, i] = convert(T, sin(theta))
     end
@@ -73,7 +74,6 @@ function Game(;
                 player_radius_wu,
                 position_increment_wu,
                 field_of_view_au,
-                num_rays,
                 top_view,
                 camera_view,
                 directions_wu,
@@ -103,13 +103,44 @@ function update_drawings!(game::Game)
     ray_draw_string = RCW.BLOCK_HALF_SHADED ^ 2
     obstacle_map = @view tile_map[WALL, :, :]
 
-    for i in 1:game.num_directions
-        direction_wu = @view game.directions_wu[:, i]
-        side_dist_wu, hit_dimension, i_hit_tu, j_hit_tu = RCW.cast_ray(obstacle_map, game.player_position_wu, direction_wu)
+    player_direction_au = game.player_direction_au[]
+    player_direction_wu = @view game.directions_wu[:, player_direction_au + 1]
+    field_of_view_start_au = player_direction_au - (game.field_of_view_au - 1) ÷ 2
+    field_of_view_end_au = player_direction_au + (game.field_of_view_au - 1) ÷ 2
 
-        i_ray_stop_pu, j_ray_stop_pu = RCW.wu_to_pu.(game.player_position_wu + side_dist_wu * direction_wu, pu_per_tu)
+    color_floor = RCW.BLOCK_FULL_SHADED ^ 2
+    color_wall_dim_1 = RCW.BLOCK_THREE_QUARTER_SHADED ^ 2
+    color_wall_dim_2 = RCW.BLOCK_HALF_SHADED ^ 2
+    color_ceiling = RCW.BLOCK_QUARTER_SHADED ^ 2
+
+    for (i, theta_au) in enumerate(field_of_view_start_au:field_of_view_end_au)
+        idx = mod(theta_au, game.num_directions) + 1
+        ray_direction_wu = @view game.directions_wu[:, idx]
+        side_dist_wu, hit_dimension, i_hit_tu, j_hit_tu = RCW.cast_ray(obstacle_map, game.player_position_wu, ray_direction_wu)
+
+        # top_view
+        i_ray_stop_pu, j_ray_stop_pu = RCW.wu_to_pu.(game.player_position_wu + side_dist_wu * ray_direction_wu, pu_per_tu)
 
         SD.draw!(top_view, SD.Line(i_player_position_pu, j_player_position_pu, i_ray_stop_pu, j_ray_stop_pu), ray_draw_string)
+
+        # camera_view
+        perp_dist = side_dist_wu * sum(player_direction_wu .* ray_direction_wu)
+        height_line_pu = floor(Int, height_camera_view_pu / perp_dist)
+
+        if hit_dimension == 1
+            color = color_wall_dim_1
+        elseif hit_dimension == 2
+            color = color_wall_dim_2
+        end
+
+        if height_line_pu >= height_camera_view_pu - 1
+            camera_view[:, i] .= color
+        else
+            padding_pu = (height_camera_view_pu - height_line_pu) ÷ 2
+            camera_view[1:padding_pu, i] .= color_ceiling
+            camera_view[padding_pu + 1 : end - padding_pu, i] .= color
+            camera_view[end - padding_pu + 1 : end, i] .= color_floor
+        end
     end
 
     return nothing
