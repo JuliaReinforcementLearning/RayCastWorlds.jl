@@ -37,9 +37,9 @@ function Game(;
         T = Float32,
         height_tile_map_tu = 8,
         width_tile_map_tu = 8,
-        num_directions = 32,
-        field_of_view_au = 32,
-        num_rays = 32,
+        num_directions = 16,
+        field_of_view_au = num_directions ÷ 4,
+        num_rays = num_directions ÷ 4,
 
         player_position_wu = SA.MVector(convert(T, height_tile_map_tu / 2), convert(T, width_tile_map_tu / 2)),
         player_direction_au = num_directions ÷ 4,
@@ -103,27 +103,14 @@ function update_drawings!(game::Game)
     ray_draw_string = RCW.BLOCK_HALF_SHADED ^ 2
     obstacle_map = @view tile_map[WALL, :, :]
 
-    for (i, direction_wu) in enumerate(game.directions[1:8])
-        side_dist_wu, hit_side, i_hit_position_tu, j_hit_position_tu = RCW.cast_ray(obstacle_map, game.player_position_wu, direction_wu)
-        # x_ray_stop_wu, y_ray_stop_wu = game.player_position_wu + side_dist * direction_wu
+    for i in 1:game.num_directions
+        direction_wu = @view game.directions_wu[:, i]
+        side_dist_wu, hit_dimension, i_hit_tu, j_hit_tu = RCW.cast_ray(obstacle_map, game.player_position_wu, direction_wu)
 
-        # i_ray_stop_pu = floor(Int, ray_stop_x * pu_per_tu) + 1
-        # j_ray_stop_pu = floor(Int, (height_tile_map - ray_stop_y) * pu_per_tu) + 1
-
-        i_ray_stop_pu, j_ray_stop_pu = RCW.wu_to_pu.(game.player_position_wu + side_dist * direction_wu)
+        i_ray_stop_pu, j_ray_stop_pu = RCW.wu_to_pu.(game.player_position_wu + side_dist_wu * direction_wu, pu_per_tu)
 
         SD.draw!(top_view, SD.Line(i_player_position_pu, j_player_position_pu, i_ray_stop_pu, j_ray_stop_pu), ray_draw_string)
     end
-
-    # for i in 1:height_top_view
-        # for j in 1:width_top_view
-            # print(io, top_view[i, j])
-        # end
-
-        # if i < height_top_view
-            # print(io, "\n")
-        # end
-    # end
 
     return nothing
 end

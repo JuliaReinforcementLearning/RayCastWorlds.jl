@@ -45,44 +45,42 @@ function cast_ray(obstacle_map, start_position_wu::AbstractArray{T, 1}, directio
     delta_dist_y_wu = abs(1 / y_direction_wu)
 
     if x_direction_wu < zero_wu
-        step_x = -1
-        side_dist_x = (x_start_position_wu - i_tu) * delta_dist_x
+        i_step_tu = -1
+        side_dist_x_wu = (x_start_position_wu - i_tu + 1) * delta_dist_x_wu
     else
-        step_x = 1
-        side_dist_x = (i_tu + 1 - x_start_position_wu) * delta_dist_x
+        i_step_tu = 1
+        side_dist_x_wu = (i_tu - x_start_position_wu) * delta_dist_x_wu
     end
 
     if y_direction_wu < zero_wu
-        step_y = -1
-        side_dist_y = (y_start_position_wu - j_tu) * delta_dist_y
+        j_step_tu = -1
+        side_dist_y_wu = (y_start_position_wu - j_tu + 1) * delta_dist_y_wu
     else
-        step_y = 1
-        side_dist_y = (j_tu + 1 - y_start_position_wu) * delta_dist_y
+        j_step_tu = 1
+        side_dist_y_wu = (j_tu - y_start_position_wu) * delta_dist_y_wu
     end
 
     has_hit = false
     side_dist_wu = Inf
-    i_hit_position_tu = -1
-    j_hit_position_tu = -1
-    hit_side = 0
+    hit_dimension = 0
 
-    while !has_hit
-        side_dist_wu = min(side_dist_x, side_dist_y)
+    while !obstacle_map[i_tu, j_tu]
 
-        if (side_dist_x < side_dist_y)
-            side_dist_x += delta_dist_x
-            i_tu += step_x
-            side = 0
+        if (side_dist_x_wu <= side_dist_y_wu)
+            side_dist_wu = side_dist_x_wu
+            side_dist_x_wu += delta_dist_x_wu
+            i_tu += i_step_tu
+            hit_dimension = 1
         else
-            side_dist_y += delta_dist_y
-            j_tu += step_y
-            side = 1
+            side_dist_wu = side_dist_y_wu
+            side_dist_y_wu += delta_dist_y_wu
+            j_tu += j_step_tu
+            hit_dimension = 2
         end
 
-        has_hit = obstacle_map[i_hit_position_tu, j_hit_position_tu]
     end
 
-    return side_dist_wu, hit_side, i_hit_position_tu, j_hit_position_tu
+    return side_dist_wu, hit_dimension, i_tu, j_tu
 end
 # function cast_ray(obstacle_map, ray_start_position::AbstractArray{T, 1}, ray_direction) where {T}
     # height_obstacle_map = size(obstacle_map, 1)
