@@ -1,5 +1,6 @@
 module TerminalGame
 
+import ..Play
 import ..RayCastWorlds as RCW
 import REPL
 import SimpleDraw as SD
@@ -146,22 +147,6 @@ function update_drawings!(game::Game)
     return nothing
 end
 
-function print_image(io::IO, image)
-    height, width = size(image)
-
-    for i in 1:height
-        for j in 1:width
-            print(io, image[i, j])
-        end
-
-        if i < height
-            print(io, "\n")
-        end
-    end
-
-    return nothing
-end
-
 function print_tile_map(io::IO, game::Game)
     tile_map = game.tile_map
     num_objects, height, width = size(tile_map)
@@ -174,5 +159,81 @@ function print_tile_map(io::IO, game::Game)
 
     return nothing
 end
+
+function step!(game::Game, action::Int)
+    if action == MOVE_FORWARD
+        player_direction_wu = @view game.directions_wu[:, game.player_direction_au[] + 1]
+        game.player_position_wu .= game.player_position_wu + game.position_increment_wu * player_direction_wu
+    elseif action == MOVE_BACKWARD
+        player_direction_wu = @view game.directions_wu[:, game.player_direction_au[] + 1]
+        game.player_position_wu .= game.player_position_wu - game.position_increment_wu * player_direction_wu
+    elseif action == TURN_LEFT
+        game.player_direction_au[] = mod(game.player_direction_au[] + 1, game.num_directions)
+    elseif action == TURN_RIGHT
+        game.player_direction_au[] = mod(game.player_direction_au[] - 1, game.num_directions)
+    end
+
+    return nothing
+end
+
+get_string_key_bindings(game::Game) = """'q': quit
+                                      'w': MOVE_UP
+                                      's': MOVE_DOWN
+                                      'a': MOVE_LEFT
+                                      'd': MOVE_RIGHT
+                                      """
+
+function play!(terminal::REPL.Terminals.UnixTerminal, game::Game; file_name::Union{Nothing, AbstractString} = nothing)
+    REPL.Terminals.raw!(terminal, true)
+
+    terminal_out = terminal.out_stream
+    terminal_in = terminal.in_stream
+    file = Play.open_maybe(file_name)
+
+    Play.write_io1_maybe_io2(terminal_out, file, Play.CLEAR_SCREEN)
+    Play.write_io1_maybe_io2(terminal_out, file, Play.MOVE_CURSOR_TO_ORIGIN)
+    Play.write_io1_maybe_io2(terminal_out, file, Play.HIDE_CURSOR)
+
+    action_chars = ('w', 's', 'a', 'd')
+
+    char_to_action = Dict('w' => MOVE_FORWARD,
+                          's' => MOVE_BACKWARD,
+                          'a' => TURN_LEFT,
+                          'd' => TURN_RIGHT,
+                         )
+
+    try
+        while true
+            Play.write_io1_maybe_io2(terminal_out, file, get_string_key_bindings(game))
+            update_drawings!(game)
+            Play.show_image_io1_maybe_io2(terminal_out, file, MIME("text/plain"), game.camera_view)
+
+            char = read(terminal_in, Char)
+
+            Play.write_io1_maybe_io2(terminal_out, file, Play.EMPTY_SCREEN)
+
+            if char == 'q'
+                Play.write_io1_maybe_io2(terminal_out, file, Play.SHOW_CURSOR)
+                Play.close_maybe(file)
+                REPL.Terminals.raw!(terminal, false)
+                return nothing
+            elseif char in action_chars
+                step!(game, char_to_action[char])
+            else
+                @warn "No key binding for character: $char"
+            end
+
+            Play.write_io1_maybe_io2(terminal_out, file, "Last character read = $(char)\n")
+        end
+    finally
+        Play.write_io1_maybe_io2(terminal_out, file, Play.SHOW_CURSOR)
+        Play.close_maybe(file)
+        REPL.Terminals.raw!(terminal, false)
+    end
+
+    return nothing
+end
+
+play!(game::Game; file_name = nothing) = play!(REPL.TerminalMenus.terminal, game, file_name = file_name)
 
 end # module
