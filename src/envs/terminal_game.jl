@@ -134,13 +134,15 @@ function update_drawings!(game::Game)
             color = color_wall_dim_2
         end
 
+        k = width_camera_view_pu - i + 1
+
         if height_line_pu >= height_camera_view_pu - 1
-            camera_view[:, i] .= color
+            camera_view[:, k] .= color
         else
             padding_pu = (height_camera_view_pu - height_line_pu) ÷ 2
-            camera_view[1:padding_pu, i] .= color_ceiling
-            camera_view[padding_pu + 1 : end - padding_pu, i] .= color
-            camera_view[end - padding_pu + 1 : end, i] .= color_floor
+            camera_view[1:padding_pu, k] .= color_ceiling
+            camera_view[padding_pu + 1 : end - padding_pu, k] .= color
+            camera_view[end - padding_pu + 1 : end, k] .= color_floor
         end
     end
 
