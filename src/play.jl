@@ -56,6 +56,34 @@ function show_image_io1_maybe_io2(io1::IO, io2::Union{Nothing, IO}, mime::MIME, 
     return nothing
 end
 
+function show_image_block_pixels(io::IO, ::MIME"text/plain", image)
+    height, width = size(image)
+
+    str = ""
+    for i in 1:height
+        for j in 1:width
+            char = image[i, j]
+            str = str * char * char
+        end
+
+        if i < height
+            str = str * "\n"
+        end
+    end
+
+    print(io, str)
+
+    return nothing
+end
+
+show_image_block_pixels_maybe(io::IO, mime, image) = show_image(io, mime, image)
+show_image_block_pixels_maybe(io::Nothing, mime, image) = nothing
+function show_image_block_pixels_io1_maybe_io2(io1::IO, io2::Union{Nothing, IO}, mime::MIME, content)
+    show_image_block_pixels(io1, mime, content)
+    show_image_block_pixels_maybe(io2, mime, content)
+    return nothing
+end
+
 function replay(terminal::REPL.Terminals.UnixTerminal, file_name::AbstractString, frame_rate)
     terminal_out = terminal.out_stream
     delimiter = EMPTY_SCREEN

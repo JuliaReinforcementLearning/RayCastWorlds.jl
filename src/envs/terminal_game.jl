@@ -94,7 +94,7 @@ function update_drawings!(game::Game)
 
     pu_per_tu = height_top_view_pu ÷ height_tile_map_tu
 
-    RCW.draw_tile_map!(top_view, tile_map, OBJECT_REPRESENTATIONS)
+    RCW.draw_tile_map!(top_view, tile_map, OBJECT_CHARACTERS)
 
     i_player_position_pu, j_player_position_pu = RCW.wu_to_pu.(game.player_position_wu, pu_per_tu)
     player_radius_pu = RCW.wu_to_pu(game.player_radius_wu, pu_per_tu)
@@ -155,7 +155,7 @@ function print_tile_map(io::IO, game::Game)
 
     image = Array{Char}(undef, height, width)
 
-    RCW.draw_tile_map!(image, tile_map, OBJECT_REPRESENTATIONS)
+    RCW.draw_tile_map!(image, tile_map, OBJECT_CHARACTERS)
 
     print_image(io, image)
 
@@ -193,7 +193,7 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::Game; file_name::Uni
 
     try
         while true
-            Play.show_image_io1_maybe_io2(terminal_out, file, MIME("text/plain"), game.camera_view)
+            Play.show_image_block_pixels_io1_maybe_io2(terminal_out, file, MIME("text/plain"), game.camera_view)
 
             char = read(terminal_in, Char)
 
