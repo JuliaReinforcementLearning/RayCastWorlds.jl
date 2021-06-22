@@ -10,7 +10,7 @@ const WALL = 1
 const BACKROUND = 2
 const NUM_OBJECTS = 2
 const CHARACTERS = (RCW.BLOCK_FULL_SHADED, RCW.BLOCK_QUARTER_SHADED)
-const OBJECT_REPRESENTATIONS = (RCW.BLOCK_FULL_SHADED ^ 2, RCW.BLOCK_QUARTER_SHADED ^ 2)
+const OBJECT_REPRESENTATIONS = (RCW.BLOCK_FULL_SHADED, RCW.BLOCK_QUARTER_SHADED)
 
 const MOVE_FORWARD = 1
 const MOVE_BACKWARD = 2
@@ -27,9 +27,8 @@ struct Game{T}
     position_increment_wu::T
 
     field_of_view_au::Int
-    # num_rays::Int
-    top_view::Array{String, 2}
-    camera_view::Array{String, 2}
+    top_view::Array{Char, 2}
+    camera_view::Array{Char, 2}
 
     directions_wu::Array{T, 2}
 end
@@ -38,8 +37,8 @@ function Game(;
         T = Float32,
         height_tile_map_tu = 8,
         width_tile_map_tu = 8,
-        num_directions = 256, # angles go from 0 to num_directions - 1 (0 corresponding to positive x-axes)
-        field_of_view_au = 65,
+        num_directions = 128, # angles go from 0 to num_directions - 1 (0 corresponding to positive x-axes)
+        field_of_view_au = 33,
 
         player_position_wu = SA.MVector(convert(T, height_tile_map_tu / 2), convert(T, width_tile_map_tu / 2)),
         player_direction_au = num_directions ÷ 8,
@@ -58,8 +57,8 @@ function Game(;
     tile_map[WALL, 1, :] .= true
     tile_map[WALL, height_tile_map_tu, :] .= true
 
-    top_view = Array{String}(undef, height_tile_map_tu * pu_per_tu, width_tile_map_tu * pu_per_tu)
-    camera_view = Array{String}(undef, field_of_view_au, field_of_view_au)
+    top_view = Array{Char}(undef, height_tile_map_tu * pu_per_tu, width_tile_map_tu * pu_per_tu)
+    camera_view = Array{Char}(undef, field_of_view_au, field_of_view_au)
 
     directions_wu = Array{T}(undef, 2, num_directions)
     for i in 1:num_directions
@@ -99,9 +98,9 @@ function update_drawings!(game::Game)
     i_player_position_pu, j_player_position_pu = RCW.wu_to_pu.(game.player_position_wu, pu_per_tu)
     player_radius_pu = RCW.wu_to_pu(game.player_radius_wu, pu_per_tu)
 
-    SD.draw!(top_view, SD.Circle(i_player_position_pu, j_player_position_pu, player_radius_pu), RCW.BLOCK_THREE_QUARTER_SHADED ^ 2)
+    SD.draw!(top_view, SD.Circle(i_player_position_pu, j_player_position_pu, player_radius_pu), RCW.BLOCK_THREE_QUARTER_SHADED)
 
-    ray_draw_string = RCW.BLOCK_HALF_SHADED ^ 2
+    ray_draw_string = RCW.BLOCK_HALF_SHADED
     obstacle_map = @view tile_map[WALL, :, :]
 
     player_direction_au = game.player_direction_au[]
@@ -109,10 +108,10 @@ function update_drawings!(game::Game)
     field_of_view_start_au = player_direction_au - (game.field_of_view_au - 1) ÷ 2
     field_of_view_end_au = player_direction_au + (game.field_of_view_au - 1) ÷ 2
 
-    color_floor = RCW.BLOCK_FULL_SHADED ^ 2
-    color_wall_dim_1 = RCW.BLOCK_THREE_QUARTER_SHADED ^ 2
-    color_wall_dim_2 = RCW.BLOCK_HALF_SHADED ^ 2
-    color_ceiling = RCW.BLOCK_QUARTER_SHADED ^ 2
+    color_floor = RCW.BLOCK_FULL_SHADED
+    color_wall_dim_1 = RCW.BLOCK_THREE_QUARTER_SHADED
+    color_wall_dim_2 = RCW.BLOCK_HALF_SHADED
+    color_ceiling = RCW.BLOCK_QUARTER_SHADED
 
     for (i, theta_au) in enumerate(field_of_view_start_au:field_of_view_end_au)
         idx = mod(theta_au, game.num_directions) + 1
@@ -153,7 +152,7 @@ function print_tile_map(io::IO, game::Game)
     tile_map = game.tile_map
     num_objects, height, width = size(tile_map)
 
-    image = Array{String}(undef, height, width)
+    image = Array{Char}(undef, height, width)
 
     RCW.draw_tile_map!(image, tile_map, OBJECT_REPRESENTATIONS)
 
