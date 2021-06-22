@@ -6,16 +6,17 @@ import REPL
 import SimpleDraw as SD
 import StaticArrays as SA
 
+const NUM_OBJECTS = 2
 const WALL = 1
 const BACKROUND = 2
-const NUM_OBJECTS = 2
-const CHARACTERS = (RCW.BLOCK_FULL_SHADED, RCW.BLOCK_QUARTER_SHADED)
-const OBJECT_REPRESENTATIONS = (RCW.BLOCK_FULL_SHADED, RCW.BLOCK_QUARTER_SHADED)
+const OBJECT_CHARACTERS = (RCW.BLOCK_FULL_SHADED, RCW.BLOCK_QUARTER_SHADED)
 
+const NUM_ACTIONS = 4
 const MOVE_FORWARD = 1
 const MOVE_BACKWARD = 2
 const TURN_LEFT = 3
 const TURN_RIGHT = 4
+const ACTION_CHARACTERS = ('w', 's', 'a', 'd')
 
 struct Game{T}
     tile_map::BitArray{3}
@@ -177,13 +178,6 @@ function step!(game::Game, action::Int)
     return nothing
 end
 
-get_string_key_bindings(game::Game) = """'q': quit
-                                      'w': MOVE_UP
-                                      's': MOVE_DOWN
-                                      'a': MOVE_LEFT
-                                      'd': MOVE_RIGHT
-                                      """
-
 function play!(terminal::REPL.Terminals.UnixTerminal, game::Game; file_name::Union{Nothing, AbstractString} = nothing)
     REPL.Terminals.raw!(terminal, true)
 
@@ -194,14 +188,6 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::Game; file_name::Uni
     Play.write_io1_maybe_io2(terminal_out, file, Play.CLEAR_SCREEN)
     Play.write_io1_maybe_io2(terminal_out, file, Play.MOVE_CURSOR_TO_ORIGIN)
     Play.write_io1_maybe_io2(terminal_out, file, Play.HIDE_CURSOR)
-
-    action_chars = ('w', 's', 'a', 'd')
-
-    char_to_action = Dict('w' => MOVE_FORWARD,
-                          's' => MOVE_BACKWARD,
-                          'a' => TURN_LEFT,
-                          'd' => TURN_RIGHT,
-                         )
 
     update_drawings!(game)
 
@@ -216,11 +202,9 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::Game; file_name::Uni
                 Play.close_maybe(file)
                 REPL.Terminals.raw!(terminal, false)
                 return nothing
-            elseif char in action_chars
-                step!(game, char_to_action[char])
+            elseif char in ACTION_CHARACTERS
+                step!(game, findfirst(==(char), ACTION_CHARACTERS))
                 update_drawings!(game)
-            else
-                @warn "No key binding for character: $char"
             end
 
             Play.write_io1_maybe_io2(terminal_out, file, Play.MOVE_CURSOR_TO_ORIGIN)
