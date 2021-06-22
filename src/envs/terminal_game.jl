@@ -38,8 +38,8 @@ function Game(;
         T = Float32,
         height_tile_map_tu = 8,
         width_tile_map_tu = 8,
-        num_directions = 128, # angles go from 0 to num_directions - 1 (0 corresponding to positive x-axes)
-        field_of_view_au = 33,
+        num_directions = 256, # angles go from 0 to num_directions - 1 (0 corresponding to positive x-axes)
+        field_of_view_au = 65,
 
         player_position_wu = SA.MVector(convert(T, height_tile_map_tu / 2), convert(T, width_tile_map_tu / 2)),
         player_direction_au = num_directions ÷ 8,
@@ -204,15 +204,13 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::Game; file_name::Uni
                           'd' => TURN_RIGHT,
                          )
 
+    update_drawings!(game)
+
     try
         while true
-            Play.write_io1_maybe_io2(terminal_out, file, get_string_key_bindings(game))
-            update_drawings!(game)
             Play.show_image_io1_maybe_io2(terminal_out, file, MIME("text/plain"), game.camera_view)
 
             char = read(terminal_in, Char)
-
-            Play.write_io1_maybe_io2(terminal_out, file, Play.EMPTY_SCREEN)
 
             if char == 'q'
                 Play.write_io1_maybe_io2(terminal_out, file, Play.SHOW_CURSOR)
@@ -221,11 +219,12 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::Game; file_name::Uni
                 return nothing
             elseif char in action_chars
                 step!(game, char_to_action[char])
+                update_drawings!(game)
             else
                 @warn "No key binding for character: $char"
             end
 
-            Play.write_io1_maybe_io2(terminal_out, file, "Last character read = $(char)\n")
+            Play.write_io1_maybe_io2(terminal_out, file, Play.MOVE_CURSOR_TO_ORIGIN)
         end
     finally
         Play.write_io1_maybe_io2(terminal_out, file, Play.SHOW_CURSOR)
