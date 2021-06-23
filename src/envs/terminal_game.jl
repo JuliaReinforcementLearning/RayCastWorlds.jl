@@ -18,10 +18,9 @@ const TURN_LEFT = 3
 const TURN_RIGHT = 4
 const ACTION_CHARACTERS = ('w', 's', 'a', 'd')
 
-const NUM_VIEWS = 3
+const NUM_VIEWS = 2
 const CAMERA_VIEW = 1
 const TOP_VIEW = 2
-const TILE_MAP_VIEW = 3
 
 struct Game{T}
     tile_map::BitArray{3}
@@ -35,7 +34,6 @@ struct Game{T}
     field_of_view_au::Int
     top_view::Array{Char, 2}
     camera_view::Array{Char, 2}
-    tile_map_view::Array{Char, 2}
 
     directions_wu::Array{T, 2}
 end
@@ -49,7 +47,7 @@ function Game(;
 
         player_position_wu = SA.MVector(convert(T, height_tile_map_tu / 2), convert(T, width_tile_map_tu / 2)),
         player_direction_au = num_directions ÷ 8,
-        player_radius_wu = convert(T, 1 / 8),
+        player_radius_wu = convert(T, 1 / 8), # should be less than 0.5
         position_increment_wu = convert(T, 1 / 8),
 
         pu_per_tu = 4,
@@ -57,16 +55,19 @@ function Game(;
 
     @assert isodd(field_of_view_au)
 
+
     tile_map = falses(NUM_OBJECTS, height_tile_map_tu, width_tile_map_tu)
+
     tile_map[BACKROUND, :, :] .= true
+
     tile_map[WALL, :, 1] .= true
     tile_map[WALL, :, width_tile_map_tu] .= true
     tile_map[WALL, 1, :] .= true
     tile_map[WALL, height_tile_map_tu, :] .= true
 
+
     top_view = Array{Char}(undef, height_tile_map_tu * pu_per_tu, width_tile_map_tu * pu_per_tu)
     camera_view = Array{Char}(undef, field_of_view_au, field_of_view_au)
-    tile_map_view = Array{Char}(undef, height_tile_map_tu, width_tile_map_tu)
 
     directions_wu = Array{T}(undef, 2, num_directions)
     for i in 1:num_directions
@@ -84,7 +85,6 @@ function Game(;
                 field_of_view_au,
                 top_view,
                 camera_view,
-                tile_map_view,
                 directions_wu,
                )
 
@@ -154,32 +154,24 @@ function update_drawings!(game::Game)
         end
     end
 
-    tile_map_view = game.tile_map_view
-    RCW.draw_tile_map!(tile_map_view, tile_map, OBJECT_CHARACTERS)
-
-    return nothing
-end
-
-function print_tile_map(io::IO, game::Game)
-    tile_map = game.tile_map
-    num_objects, height, width = size(tile_map)
-
-    image = Array{Char}(undef, height, width)
-
-    RCW.draw_tile_map!(image, tile_map, OBJECT_CHARACTERS)
-
-    print_image(io, image)
-
     return nothing
 end
 
 function step!(game::Game, action::Int)
     if action == MOVE_FORWARD
         player_direction_wu = @view game.directions_wu[:, game.player_direction_au[] + 1]
-        game.player_position_wu .= game.player_position_wu + game.position_increment_wu * player_direction_wu
+        new_player_position_wu = game.player_position_wu + game.position_increment_wu * player_direction_wu
+        obstacle_map = @view game.tile_map[WALL, :, :]
+        if !RCW.is_player_colliding(obstacle_map, new_player_position_wu, game.player_radius_wu)
+            game.player_position_wu .= new_player_position_wu
+        end
     elseif action == MOVE_BACKWARD
         player_direction_wu = @view game.directions_wu[:, game.player_direction_au[] + 1]
-        game.player_position_wu .= game.player_position_wu - game.position_increment_wu * player_direction_wu
+        new_player_position_wu .= game.player_position_wu - game.position_increment_wu * player_direction_wu
+        obstacle_map = @view game.tile_map[WALL, :, :]
+        if !RCW.is_player_colliding(obstacle_map, new_player_position_wu, game.player_radius_wu)
+            game.player_position_wu .= new_player_position_wu
+        end
     elseif action == TURN_LEFT
         game.player_direction_au[] = mod(game.player_direction_au[] + 1, game.num_directions)
     elseif action == TURN_RIGHT
@@ -209,8 +201,6 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::Game; file_name::Uni
         while true
             if current_view == TOP_VIEW
                 Play.show_image_block_pixels_io1_maybe_io2(terminal_out, file, MIME("text/plain"), game.top_view)
-            elseif current_view == TILE_MAP_VIEW
-                Play.show_image_block_pixels_io1_maybe_io2(terminal_out, file, MIME("text/plain"), game.tile_map_view)
             else
                 Play.show_image_block_pixels_io1_maybe_io2(terminal_out, file, MIME("text/plain"), game.camera_view)
             end
