@@ -1,13 +1,22 @@
-function is_agent_colliding(tile_map, position_wu, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu)
-    height_tile_map_tu = GW.get_height(tile_map)
-    square = StdSquare(tile_half_side_wu)
-    circle = StdCircle(radius_wu)
-    return any(pos -> (tile_map[GW.WALL, pos] || tile_map[GW.GOAL, pos]) && is_colliding(square, circle, position_wu .- get_tile_center_wu(pos.I, wu_per_tu, height_tile_map_tu, tile_half_side_wu)), get_agent_region_tu(position_wu, radius_wu, wu_per_tu, height_world_wu))
-end
+function is_player_colliding(obstacle_map, player_position_wu, player_radius_wu::T) where {T}
+    height_tile_map_tu, width_tile_map_tu = size(obstacle_map)
 
-function is_agent_colliding(tile_map, position_wu, wu_per_tu, tile_half_side_wu, radius_wu, height_world_wu, object)
-    height_tile_map_tu = GW.get_height(tile_map)
-    square = StdSquare(tile_half_side_wu)
-    circle = StdCircle(radius_wu)
-    return any(pos -> tile_map[object, pos] && is_colliding(square, circle, position_wu .- get_tile_center_wu(pos.I, wu_per_tu, height_tile_map_tu, tile_half_side_wu)), get_agent_region_tu(position_wu, radius_wu, wu_per_tu, height_world_wu))
+    square = StdSquare(convert(T, 0.5))
+    circle = StdCircle(player_radius_wu)
+
+    i_player_position_tu = wu_to_tu(player_position_wu[1])
+    j_player_position_tu = wu_to_tu(player_position_wu[2])
+
+    for j in j_player_position_tu - 1 : j_player_position_tu + 1
+        for i in i_player_position_tu - 1 : i_player_position_tu + 1
+            tile_position_wu = similar(player_position_wu)
+            tile_position_wu[1] = i - convert(T, 0.5)
+            tile_position_wu[2] = j - convert(T, 0.5)
+            if obstacle_map[i, j] && is_colliding(square, circle, player_position_wu .- tile_position_wu)
+                return true
+            end
+        end
+    end
+
+    return false
 end
