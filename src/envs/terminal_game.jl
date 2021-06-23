@@ -18,6 +18,11 @@ const TURN_LEFT = 3
 const TURN_RIGHT = 4
 const ACTION_CHARACTERS = ('w', 's', 'a', 'd')
 
+const NUM_VIEWS = 3
+const CAMERA_VIEW = 1
+const TOP_VIEW = 2
+const TILE_MAP_VIEW = 3
+
 struct Game{T}
     tile_map::BitArray{3}
     num_directions::Int
@@ -30,6 +35,7 @@ struct Game{T}
     field_of_view_au::Int
     top_view::Array{Char, 2}
     camera_view::Array{Char, 2}
+    tile_map_view::Array{Char, 2}
 
     directions_wu::Array{T, 2}
 end
@@ -39,7 +45,7 @@ function Game(;
         height_tile_map_tu = 8,
         width_tile_map_tu = 8,
         num_directions = 128, # angles go from 0 to num_directions - 1 (0 corresponding to positive x-axes)
-        field_of_view_au = 33,
+        field_of_view_au = isodd(num_directions ÷ 6) ? num_directions ÷ 6 : (num_directions ÷ 6) + 1 ,
 
         player_position_wu = SA.MVector(convert(T, height_tile_map_tu / 2), convert(T, width_tile_map_tu / 2)),
         player_direction_au = num_directions ÷ 8,
@@ -60,6 +66,7 @@ function Game(;
 
     top_view = Array{Char}(undef, height_tile_map_tu * pu_per_tu, width_tile_map_tu * pu_per_tu)
     camera_view = Array{Char}(undef, field_of_view_au, field_of_view_au)
+    tile_map_view = Array{Char}(undef, height_tile_map_tu, width_tile_map_tu)
 
     directions_wu = Array{T}(undef, 2, num_directions)
     for i in 1:num_directions
@@ -77,6 +84,7 @@ function Game(;
                 field_of_view_au,
                 top_view,
                 camera_view,
+                tile_map_view,
                 directions_wu,
                )
 
@@ -146,6 +154,9 @@ function update_drawings!(game::Game)
         end
     end
 
+    tile_map_view = game.tile_map_view
+    RCW.draw_tile_map!(tile_map_view, tile_map, OBJECT_CHARACTERS)
+
     return nothing
 end
 
@@ -191,9 +202,18 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::Game; file_name::Uni
 
     update_drawings!(game)
 
+    current_view = CAMERA_VIEW
+    can_overwrite_view = true
+
     try
         while true
-            Play.show_image_block_pixels_io1_maybe_io2(terminal_out, file, MIME("text/plain"), game.camera_view)
+            if current_view == TOP_VIEW
+                Play.show_image_block_pixels_io1_maybe_io2(terminal_out, file, MIME("text/plain"), game.top_view)
+            elseif current_view == TILE_MAP_VIEW
+                Play.show_image_block_pixels_io1_maybe_io2(terminal_out, file, MIME("text/plain"), game.tile_map_view)
+            else
+                Play.show_image_block_pixels_io1_maybe_io2(terminal_out, file, MIME("text/plain"), game.camera_view)
+            end
 
             char = read(terminal_in, Char)
 
@@ -202,6 +222,9 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::Game; file_name::Uni
                 Play.close_maybe(file)
                 REPL.Terminals.raw!(terminal, false)
                 return nothing
+            elseif char == 'v'
+                current_view = mod1(current_view + 1, NUM_VIEWS)
+                Play.write_io1_maybe_io2(terminal_out, file, Play.CLEAR_SCREEN_BEFORE_CURSOR)
             elseif char in ACTION_CHARACTERS
                 step!(game, findfirst(==(char), ACTION_CHARACTERS))
                 update_drawings!(game)
