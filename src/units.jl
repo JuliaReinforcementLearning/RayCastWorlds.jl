@@ -7,13 +7,8 @@ pu_to_tu(i_pu::Integer, pu_per_tu) = (i_pu - 1) ÷ pu_per_tu + 1
 
 # others
 
-wu_to_pu((x_wu, y_wu), pu_per_wu, height_world_wu) = (wu_to_pu(height_world_wu - y_wu, pu_per_wu), wu_to_pu(x_wu, pu_per_wu))
-wu_to_tu((x_wu, y_wu), wu_per_tu, height_world_wu) = (wu_to_tu(height_world_wu - y_wu, wu_per_tu), wu_to_tu(x_wu, wu_per_tu))
-
 get_tile_start_pu(i_tu, pu_per_tu) = (i_tu - 1) * pu_per_tu + 1
 get_tile_stop_pu(i_tu, pu_per_tu) = i_tu * pu_per_tu
-
-map_to_tu((map_x, map_y), height_tm_tu) = (height_tm_tu - map_y, map_x + 1)
 
 # tile region
 
@@ -21,8 +16,6 @@ get_tile_bottom_left_wu((i_tu, j_tu), wu_per_tu, height_tm_tu) = ((j_tu - 1) * w
 get_tile_center_wu(tile_tu, wu_per_tu, height_tm_tu, tile_half_side_wu) = get_tile_bottom_left_wu(tile_tu, wu_per_tu, height_tm_tu) .+ tile_half_side_wu
 
 # agent region
-
-get_agent_center_pu(pos_wu, pu_per_wu, height_world_wu) = wu_to_pu(pos_wu, pu_per_wu, height_world_wu)
 
 get_agent_bottom_left_tu(center_wu, radius_wu, wu_per_tu, height_world_wu) = wu_to_tu(center_wu .- radius_wu, wu_per_tu, height_world_wu)
 get_agent_top_right_tu(center_wu, radius_wu, wu_per_tu, height_world_wu) = wu_to_tu(center_wu .+ radius_wu, wu_per_tu, height_world_wu)

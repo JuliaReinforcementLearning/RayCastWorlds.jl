@@ -82,61 +82,6 @@ function cast_ray(obstacle_map, start_position_wu::AbstractArray{T, 1}, directio
 
     return side_dist_wu, hit_dimension, i_tu, j_tu
 end
-# function cast_ray(obstacle_map, ray_start_position::AbstractArray{T, 1}, ray_direction) where {T}
-    # height_obstacle_map = size(obstacle_map, 1)
-
-    # ray_start_position_x, ray_start_position_y = ray_start_position
-    # map_x = floor(Int, ray_start_position_x)
-    # map_y = floor(Int, ray_start_position_y)
-
-    # ray_direction_x, ray_direction_y = ray_direction
-    # delta_dist_x = abs(1 / ray_direction_x)
-    # delta_dist_y = abs(1 / ray_direction_y)
-
-    # if ray_direction_x < zero(T)
-        # step_x = -1
-        # side_dist_x = (ray_start_position_x - map_x) * delta_dist_x
-    # else
-        # step_x = 1
-        # side_dist_x = (map_x + 1 - ray_start_position_x) * delta_dist_x
-    # end
-
-    # if ray_direction_y < zero(T)
-        # step_y = -1
-        # side_dist_y = (ray_start_position_y - map_y) * delta_dist_y
-    # else
-        # step_y = 1
-        # side_dist_y = (map_y + 1 - ray_start_position_y) * delta_dist_y
-    # end
-
-    # has_hit = false
-    # side_dist = Inf
-    # hit_pos_tu = (1, 1)
-    # side = 0
-
-    # i_obstacle_map = height_obstacle_map - map_y
-    # j_obstacle_map = map_x + 1
-
-    # while !has_hit
-        # side_dist = min(side_dist_x, side_dist_y)
-
-        # if (side_dist_x < side_dist_y)
-            # side_dist_x += delta_dist_x
-            # map_x += step_x
-            # side = 0
-        # else
-            # side_dist_y += delta_dist_y
-            # map_y += step_y
-            # side = 1
-        # end
-
-        # i_obstacle_map = height_obstacle_map - map_y
-        # j_obstacle_map = map_x + 1
-        # has_hit = obstacle_map[i_obstacle_map, j_obstacle_map]
-    # end
-
-    # return side_dist, side, CartesianIndex(i_obstacle_map, j_obstacle_map)
-# end
 
 #####
 ##### draw agent view
