@@ -32,11 +32,12 @@ function draw_tile_map!(top_view, tile_map, colors)
     return nothing
 end
 
-function update_camera_view!(camera_view, world)
+function update_camera_view!(camera_view, world, floor_color, ceiling_color, wall_dim_1_color, wall_dim_2_color)
     tile_map = world.tile_map
     player_direction_au = world.player_direction_au
     player_position_wu = world.player_position_wu
     field_of_view_au = world.field_of_view_au
+    num_directions = world.num_directions
     player_direction_au = world.player_direction_au
     player_position_wu = world.player_position_wu
     ray_stop_position_tu = world.ray_stop_position_tu
@@ -44,15 +45,10 @@ function update_camera_view!(camera_view, world)
     ray_distance_wu = world.ray_distance_wu
     directions_wu = world.directions_wu
 
-    color_floor = RCW.BLOCK_FULL_SHADED
-    color_wall_dim_1 = RCW.BLOCK_THREE_QUARTER_SHADED
-    color_wall_dim_2 = RCW.BLOCK_HALF_SHADED
-    color_ceiling = RCW.BLOCK_QUARTER_SHADED
-
     height_tile_map_tu, width_tile_map_tu = size(tile_map, 2), size(tile_map, 3)
     height_camera_view_pu, width_camera_view_pu = size(camera_view)
 
-    player_direction_wu = @view game.directions_wu[:, player_direction_au + 1]
+    player_direction_wu = @view directions_wu[:, player_direction_au + 1]
     field_of_view_start_au = player_direction_au - (field_of_view_au - 1) ÷ 2
     field_of_view_end_au = player_direction_au + (field_of_view_au - 1) ÷ 2
 
@@ -66,9 +62,9 @@ function update_camera_view!(camera_view, world)
         hit_dimension = ray_hit_dimension[i]
 
         if hit_dimension == 1
-            color = color_wall_dim_1
+            color = wall_dim_1_color
         elseif hit_dimension == 2
-            color = color_wall_dim_2
+            color = wall_dim_2_color
         end
 
         k = width_camera_view_pu - i + 1
@@ -77,9 +73,9 @@ function update_camera_view!(camera_view, world)
             camera_view[:, k] .= color
         else
             padding_pu = (height_camera_view_pu - height_line_pu) ÷ 2
-            camera_view[1:padding_pu, k] .= color_ceiling
+            camera_view[1:padding_pu, k] .= ceiling_color
             camera_view[padding_pu + 1 : end - padding_pu, k] .= color
-            camera_view[end - padding_pu + 1 : end, k] .= color_floor
+            camera_view[end - padding_pu + 1 : end, k] .= floor_color
         end
     end
 
@@ -111,7 +107,7 @@ function update_top_view!(top_view, world, tile_map_colors, ray_color, player_co
 
     for (i, theta_au) in enumerate(field_of_view_start_au:field_of_view_end_au)
         idx = mod(theta_au, num_directions) + 1
-        ray_direction_wu = @view game.directions_wu[:, idx]
+        ray_direction_wu = @view directions_wu[:, idx]
 
         i_ray_stop_pu, j_ray_stop_pu = wu_to_pu.(player_position_wu + ray_distance_wu[i] * ray_direction_wu, pu_per_tu)
 
