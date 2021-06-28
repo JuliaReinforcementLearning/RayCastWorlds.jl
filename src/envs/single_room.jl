@@ -1,4 +1,4 @@
-module ModuleSingleRoom
+module SingleRoomModule
 
 import RayCaster as RC
 import ..RayCastWorlds as RCW
@@ -73,25 +73,25 @@ function SingleRoom(;
     return world
 end
 
-function act!(env::SingleRoom, action::Integer)
+function act!(world::SingleRoom, action::Integer)
     if action == MOVE_FORWARD
-        player_direction_wu = @view env.directions_wu[:, env.player_direction_au + 1]
-        new_player_position_wu = env.player_position_wu + env.position_increment_wu * player_direction_wu
-        obstacle_map = @view env.tile_map[WALL, :, :]
-        if !RCW.is_player_colliding(obstacle_map, new_player_position_wu, env.player_radius_wu)
-            env.player_position_wu .= new_player_position_wu
+        player_direction_wu = @view world.directions_wu[:, world.player_direction_au + 1]
+        new_player_position_wu = world.player_position_wu + world.position_increment_wu * player_direction_wu
+        obstacle_map = @view world.tile_map[WALL, :, :]
+        if !RCW.is_player_colliding(obstacle_map, new_player_position_wu, world.player_radius_wu)
+            world.player_position_wu .= new_player_position_wu
         end
     elseif action == MOVE_BACKWARD
-        player_direction_wu = @view env.directions_wu[:, env.player_direction_au + 1]
-        new_player_position_wu = env.player_position_wu - env.position_increment_wu * player_direction_wu
-        obstacle_map = @view env.tile_map[WALL, :, :]
-        if !RCW.is_player_colliding(obstacle_map, new_player_position_wu, env.player_radius_wu)
-            env.player_position_wu .= new_player_position_wu
+        player_direction_wu = @view world.directions_wu[:, world.player_direction_au + 1]
+        new_player_position_wu = world.player_position_wu - world.position_increment_wu * player_direction_wu
+        obstacle_map = @view world.tile_map[WALL, :, :]
+        if !RCW.is_player_colliding(obstacle_map, new_player_position_wu, world.player_radius_wu)
+            world.player_position_wu .= new_player_position_wu
         end
     elseif action == TURN_LEFT
-        env.player_direction_au = mod(env.player_direction_au + 1, env.num_directions)
+        world.player_direction_au = mod(world.player_direction_au + 1, world.num_directions)
     elseif action == TURN_RIGHT
-        env.player_direction_au = mod(env.player_direction_au - 1, env.num_directions)
+        world.player_direction_au = mod(world.player_direction_au - 1, world.num_directions)
     end
 
     return nothing
@@ -118,6 +118,7 @@ function cast_rays!(world::SingleRoom)
         direction_idx = mod(theta_au, num_directions) + 1
         ray_direction_wu = @view directions_wu[:, direction_idx]
         side_dist_wu, hit_dimension, i_hit_tu, j_hit_tu = RC.cast_ray(obstacle_map, player_position_wu..., ray_direction_wu...)
+        @show typeof(i_hit_tu), typeof(j_hit_tu)
         # side_dist_wu, hit_dimension, i_hit_tu, j_hit_tu = RCW.cast_ray(obstacle_map, player_position_wu, ray_direction_wu)
         ray_stop_position_tu[1, i] = i_hit_tu
         ray_stop_position_tu[2, i] = j_hit_tu
