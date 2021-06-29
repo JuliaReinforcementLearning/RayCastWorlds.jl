@@ -4,6 +4,7 @@ authors = ["Sid-Bhatia-0 <sidb60200@gmail.com> and contributors"]
 version = "0.0.1"
 
 [deps]
+ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
 MiniFB = "cc649173-1898-4bb8-8a16-ca5f88bd87d9"
 REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 RayCaster = "17f63090-eba8-4cc7-872a-3f6808909c39"
