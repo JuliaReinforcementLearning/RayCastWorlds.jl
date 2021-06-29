@@ -20,7 +20,7 @@ struct SingleRoomGame{T, C}
     world::SRM.SingleRoom{T}
     top_view::Array{C, 2}
     camera_view::Array{C, 2}
-    tile_map_colors::NTuple{C}
+    tile_map_colors::NTuple{SRM.NUM_OBJECTS + 1, C}
     ray_color::C
     player_color::C
     floor_color::C
@@ -206,6 +206,7 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::SingleRoomGame; file
                 Play.write_io1_maybe_io2(terminal_out, file, Play.CLEAR_SCREEN_BEFORE_CURSOR)
             elseif char in ACTION_CHARACTERS
                 SRM.act!(world, findfirst(==(char), ACTION_CHARACTERS))
+                SRM.cast_rays!(world)
                 RCW.update_top_view!(top_view, world, tile_map_colors, ray_color, player_color)
                 RCW.update_camera_view!(camera_view, world, floor_color, ceiling_color, wall_dim_1_color, wall_dim_2_color)
             end

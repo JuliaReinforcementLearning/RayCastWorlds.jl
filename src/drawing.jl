@@ -9,10 +9,10 @@ function draw_tile_map!(top_view, tile_map, colors)
     _, height_tile_map_tu, width_tile_map_tu = size(tile_map)
     height_top_view_pu = size(top_view, 1)
 
-    pu_per_tu = height_image ÷ height_tile_map
+    pu_per_tu = height_top_view_pu ÷ height_tile_map_tu
 
-    for j in 1:width_tile_map
-        for i in 1:height_tile_map
+    for j in 1:width_tile_map_tu
+        for i in 1:height_tile_map_tu
             i_top_left = (i - 1) * pu_per_tu + 1
             j_top_left = (j - 1) * pu_per_tu + 1
 
@@ -87,6 +87,7 @@ function update_top_view!(top_view, world, tile_map_colors, ray_color, player_co
     player_direction_au = world.player_direction_au
     player_position_wu = world.player_position_wu
     field_of_view_au = world.field_of_view_au
+    num_directions = world.num_directions
     player_direction_au = world.player_direction_au
     player_position_wu = world.player_position_wu
     player_radius_wu = world.player_radius_wu
@@ -102,6 +103,8 @@ function update_top_view!(top_view, world, tile_map_colors, ray_color, player_co
 
     i_player_position_pu, j_player_position_pu = wu_to_pu.(player_position_wu, pu_per_tu)
     player_radius_pu = wu_to_pu(player_radius_wu, pu_per_tu)
+    field_of_view_start_au = player_direction_au - (field_of_view_au - 1) ÷ 2
+    field_of_view_end_au = player_direction_au + (field_of_view_au - 1) ÷ 2
 
     draw_tile_map!(top_view, tile_map, tile_map_colors)
 
