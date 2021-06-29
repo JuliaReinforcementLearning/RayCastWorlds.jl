@@ -10,6 +10,7 @@ include("play.jl")
 include("units.jl")
 include("collision_detection.jl")
 include("drawing.jl")
-include("envs/envs.jl")
+include("single_room.jl")
+include("single_room_game.jl")
 
 end
