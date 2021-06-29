@@ -1,2 +1,2 @@
 include("single_room.jl")
-include("terminal_game.jl")
+include("single_room_game.jl")
