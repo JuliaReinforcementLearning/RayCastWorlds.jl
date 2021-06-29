@@ -1,7 +1,6 @@
 module RayCastWorlds
 
 import MiniFB as MFB
-import Random
 import RayCaster as RC
 import REPL
 import SimpleDraw as SD

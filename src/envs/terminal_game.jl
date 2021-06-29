@@ -1,10 +1,8 @@
 module SingleRoomGameModule
 
 import ..Play
-import RayCaster as RC
 import ..RayCastWorlds as RCW
 import REPL
-import SimpleDraw as SD
 import ..SingleRoomModule as SRM
 import StaticArrays as SA
 
@@ -94,73 +92,6 @@ function SingleRoomGame(;
 
     return game
 end
-
-# function update_drawings!(game::SingleRoomGame)
-    # tile_map = game.tile_map
-    # top_view = game.top_view
-    # camera_view = game.camera_view
-
-    # height_tile_map_tu, width_tile_map_tu = size(tile_map, 2), size(tile_map, 3)
-    # height_top_view_pu, width_top_view_pu = size(top_view)
-    # height_camera_view_pu, width_camera_view_pu = size(camera_view)
-
-    # pu_per_tu = height_top_view_pu ÷ height_tile_map_tu
-
-    # RCW.draw_tile_map!(top_view, tile_map, OBJECT_CHARACTERS)
-
-    # i_player_position_pu, j_player_position_pu = RCW.wu_to_pu.(game.player_position_wu, pu_per_tu)
-    # player_radius_pu = RCW.wu_to_pu(game.player_radius_wu, pu_per_tu)
-
-    # SD.draw!(top_view, SD.Circle(i_player_position_pu, j_player_position_pu, player_radius_pu), RCW.BLOCK_THREE_QUARTER_SHADED)
-
-    # ray_draw_string = RCW.BLOCK_HALF_SHADED
-    # obstacle_map = @view tile_map[WALL, :, :]
-
-    # player_direction_au = game.player_direction_au[]
-    # player_direction_wu = @view game.directions_wu[:, player_direction_au + 1]
-    # field_of_view_start_au = player_direction_au - (game.field_of_view_au - 1) ÷ 2
-    # field_of_view_end_au = player_direction_au + (game.field_of_view_au - 1) ÷ 2
-
-    # color_floor = RCW.BLOCK_FULL_SHADED
-    # color_wall_dim_1 = RCW.BLOCK_THREE_QUARTER_SHADED
-    # color_wall_dim_2 = RCW.BLOCK_HALF_SHADED
-    # color_ceiling = RCW.BLOCK_QUARTER_SHADED
-
-    # for (i, theta_au) in enumerate(field_of_view_start_au:field_of_view_end_au)
-        # idx = mod(theta_au, game.num_directions) + 1
-        # ray_direction_wu = @view game.directions_wu[:, idx]
-        # # side_dist_wu, hit_dimension, i_hit_tu, j_hit_tu = RC.cast_ray(obstacle_map, game.player_position_wu..., ray_direction_wu...)
-        # side_dist_wu, hit_dimension, i_hit_tu, j_hit_tu = RCW.cast_ray(obstacle_map, game.player_position_wu, ray_direction_wu)
-
-        # # top_view
-        # i_ray_stop_pu, j_ray_stop_pu = RCW.wu_to_pu.(game.player_position_wu + side_dist_wu * ray_direction_wu, pu_per_tu)
-
-        # SD.draw!(top_view, SD.Line(i_player_position_pu, j_player_position_pu, i_ray_stop_pu, j_ray_stop_pu), ray_draw_string)
-
-        # # camera_view
-        # perp_dist = side_dist_wu * sum(player_direction_wu .* ray_direction_wu)
-        # height_line_pu = floor(Int, height_camera_view_pu / perp_dist)
-
-        # if hit_dimension == 1
-            # color = color_wall_dim_1
-        # elseif hit_dimension == 2
-            # color = color_wall_dim_2
-        # end
-
-        # k = width_camera_view_pu - i + 1
-
-        # if height_line_pu >= height_camera_view_pu - 1
-            # camera_view[:, k] .= color
-        # else
-            # padding_pu = (height_camera_view_pu - height_line_pu) ÷ 2
-            # camera_view[1:padding_pu, k] .= color_ceiling
-            # camera_view[padding_pu + 1 : end - padding_pu, k] .= color
-            # camera_view[end - padding_pu + 1 : end, k] .= color_floor
-        # end
-    # end
-
-    # return nothing
-# end
 
 function play!(terminal::REPL.Terminals.UnixTerminal, game::SingleRoomGame; file_name::Union{Nothing, AbstractString} = nothing)
     world = game.world

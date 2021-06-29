@@ -118,7 +118,6 @@ function cast_rays!(world::SingleRoom)
         direction_idx = mod(theta_au, num_directions) + 1
         ray_direction_wu = @view directions_wu[:, direction_idx]
         i_hit_tu, j_hit_tu, hit_dimension, side_dist_wu = RC.cast_ray(obstacle_map, player_position_wu..., ray_direction_wu...)
-        # side_dist_wu, hit_dimension, i_hit_tu, j_hit_tu = RCW.cast_ray(obstacle_map, player_position_wu, ray_direction_wu)
         ray_stop_position_tu[1, i] = i_hit_tu
         ray_stop_position_tu[2, i] = j_hit_tu
         ray_hit_dimension[i] = hit_dimension
