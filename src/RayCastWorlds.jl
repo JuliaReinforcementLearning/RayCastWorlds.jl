@@ -7,6 +7,7 @@ import SimpleDraw as SD
 import StaticArrays as SA
 
 include("play.jl")
+include("play_minifb.jl")
 include("units.jl")
 include("collision_detection.jl")
 include("drawing.jl")

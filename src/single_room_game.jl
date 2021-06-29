@@ -1,14 +1,13 @@
 module SingleRoomGameModule
 
+import ColorTypes as CT
+import MiniFB as MFB
 import ..Play
+import ..PlayMiniFB
 import ..RayCastWorlds as RCW
 import REPL
 import ..SingleRoomModule as SRM
 import StaticArrays as SA
-
-const OBJECT_CHARACTERS = (RCW.BLOCK_FULL_SHADED, RCW.BLOCK_QUARTER_SHADED)
-const TILE_MAP_CHARACTERS = (RCW.BLOCK_FULL_SHADED, RCW.BLOCK_QUARTER_SHADED)
-const ACTION_CHARACTERS = ('w', 's', 'a', 'd')
 
 const NUM_VIEWS = 2
 const CAMERA_VIEW = 1
@@ -27,13 +26,29 @@ struct SingleRoomGame{T, C}
     wall_dim_2_color::C
 end
 
-get_default_tile_map_colors(Char) = (RCW.BLOCK_FULL_SHADED, RCW.BLOCK_QUARTER_SHADED)
-get_default_ray_color(Char) = RCW.BLOCK_HALF_SHADED
-get_default_player_color(Char) = RCW.BLOCK_THREE_QUARTER_SHADED
-get_default_floor_color(Char) = RCW.BLOCK_QUARTER_SHADED
-get_default_ceiling_color(Char) = RCW.BLOCK_FULL_SHADED
-get_default_wall_dim_1_color(Char) = RCW.BLOCK_HALF_SHADED
-get_default_wall_dim_2_color(Char) = RCW.BLOCK_THREE_QUARTER_SHADED
+get_action_keys(::Type{Char}) = ('w', 's', 'a', 'd')
+get_action_keys(::Type{CT.RGB24}) = (MFB.KB_KEY_W, MFB.KB_KEY_S, MFB.KB_KEY_A, MFB.KB_KEY_D)
+
+get_default_tile_map_colors(::Type{Char}) = (RCW.BLOCK_FULL_SHADED, RCW.BLOCK_QUARTER_SHADED)
+get_default_tile_map_colors(::Type{CT.RGB24}) = (reinterpret(CT.RGB24, 0x00FFFFFF), reinterpret(CT.RGB24, 0x00404040))
+
+get_default_ray_color(::Type{Char}) = RCW.BLOCK_HALF_SHADED
+get_default_ray_color(::Type{CT.RGB24}) = reinterpret(CT.RGB24, 0x00808080)
+
+get_default_player_color(::Type{Char}) = RCW.BLOCK_THREE_QUARTER_SHADED
+get_default_player_color(::Type{CT.RGB24}) = reinterpret(CT.RGB24, 0x00c0c0c0)
+
+get_default_floor_color(::Type{Char}) = RCW.BLOCK_QUARTER_SHADED
+get_default_floor_color(::Type{CT.RGB24}) = reinterpret(CT.RGB24, 0x00404040)
+
+get_default_ceiling_color(::Type{Char}) = RCW.BLOCK_FULL_SHADED
+get_default_ceiling_color(::Type{CT.RGB24}) = reinterpret(CT.RGB24, 0x00FFFFFF)
+
+get_default_wall_dim_1_color(::Type{Char}) = RCW.BLOCK_HALF_SHADED
+get_default_wall_dim_1_color(::Type{CT.RGB24}) = reinterpret(CT.RGB24, 0x00808080)
+
+get_default_wall_dim_2_color(::Type{Char}) = RCW.BLOCK_THREE_QUARTER_SHADED
+get_default_wall_dim_2_color(::Type{CT.RGB24}) = reinterpret(CT.RGB24, 0x00c0c0c0)
 
 function SingleRoomGame(;
         C = Char,
@@ -116,6 +131,7 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::SingleRoomGame; file
     Play.write_io1_maybe_io2(terminal_out, file, Play.HIDE_CURSOR)
 
     current_view = CAMERA_VIEW
+    action_keys = get_action_keys(Char)
 
     try
         while true
@@ -135,8 +151,8 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::SingleRoomGame; file
             elseif char == 'v'
                 current_view = mod1(current_view + 1, NUM_VIEWS)
                 Play.write_io1_maybe_io2(terminal_out, file, Play.CLEAR_SCREEN_BEFORE_CURSOR)
-            elseif char in ACTION_CHARACTERS
-                SRM.act!(world, findfirst(==(char), ACTION_CHARACTERS))
+            elseif char in action_keys
+                SRM.act!(world, findfirst(==(char), action_keys))
                 SRM.cast_rays!(world)
                 RCW.update_top_view!(top_view, world, tile_map_colors, ray_color, player_color)
                 RCW.update_camera_view!(camera_view, world, floor_color, ceiling_color, wall_dim_1_color, wall_dim_2_color)
@@ -154,5 +170,76 @@ function play!(terminal::REPL.Terminals.UnixTerminal, game::SingleRoomGame; file
 end
 
 play!(game::SingleRoomGame; file_name = nothing) = play!(REPL.TerminalMenus.terminal, game, file_name = file_name)
+
+function play_minifb!(game::SingleRoomGame)
+    world = game.world
+    top_view = game.top_view
+    camera_view = game.camera_view
+    tile_map_colors = game.tile_map_colors
+    ray_color = game.ray_color
+    player_color = game.player_color
+    floor_color = game.floor_color
+    ceiling_color = game.ceiling_color
+    wall_dim_1_color = game.wall_dim_1_color
+    wall_dim_2_color = game.wall_dim_2_color
+
+    height_top_view_pu, width_top_view_pu = size(top_view)
+    height_camera_view_pu, width_camera_view_pu = size(camera_view)
+
+    height_image = max(height_top_view_pu, height_camera_view_pu)
+    width_image = max(width_top_view_pu, width_camera_view_pu)
+
+    frame_buffer = zeros(UInt32, width_image, height_image)
+
+    window = MFB.mfb_open("Game", width_image, height_image)
+
+    action_keys = get_action_keys(CT.RGB24)
+
+    current_view = CAMERA_VIEW
+    if current_view == CAMERA_VIEW
+        PlayMiniFB.copy_image_to_frame_buffer!(frame_buffer, camera_view)
+    elseif current_view == TOP_VIEW
+        PlayMiniFB.copy_image_to_frame_buffer!(frame_buffer, top_view)
+    end
+
+    function keyboard_callback(window, key, mod, is_pressed)::Cvoid
+        if is_pressed
+            println(key)
+
+            if key == MFB.KB_KEY_Q
+                MFB.mfb_close(window)
+                return nothing
+            elseif key == MFB.KB_KEY_V
+                current_view = mod1(current_view + 1, NUM_VIEWS)
+                fill!(frame_buffer, 0x00000000)
+            elseif key in action_keys
+                SRM.act!(world, findfirst(==(key), action_keys))
+                SRM.cast_rays!(world)
+                RCW.update_top_view!(top_view, world, tile_map_colors, ray_color, player_color)
+                RCW.update_camera_view!(camera_view, world, floor_color, ceiling_color, wall_dim_1_color, wall_dim_2_color)
+            end
+
+            if current_view == CAMERA_VIEW
+                PlayMiniFB.copy_image_to_frame_buffer!(frame_buffer, camera_view)
+            elseif current_view == TOP_VIEW
+                PlayMiniFB.copy_image_to_frame_buffer!(frame_buffer, top_view)
+            end
+        end
+
+        return nothing
+    end
+
+    MFB.mfb_set_keyboard_callback(window, keyboard_callback)
+
+    while MFB.mfb_wait_sync(window)
+        state = MFB.mfb_update(window, frame_buffer)
+
+        if state != MFB.STATE_OK
+            break;
+        end
+    end
+
+    return nothing
+end
 
 end # module
