@@ -27,7 +27,7 @@ end
 include("units.jl")
 include("collision_detection.jl")
 include("navigation.jl")
-include("single_room_world.jl")
+include("single_room.jl")
 include("single_room_game.jl")
 
 end
