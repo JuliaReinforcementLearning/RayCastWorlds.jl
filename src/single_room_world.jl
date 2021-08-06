@@ -138,7 +138,7 @@ function RCW.act!(world::SingleRoom, action)
         is_colliding_with_goal = RCW.is_player_colliding(goal_map, new_player_position_wu, player_radius_wu)
         is_colliding_with_wall = RCW.is_player_colliding(wall_map, new_player_position_wu, player_radius_wu)
 
-        if !is_colliding_with_wall
+        if is_colliding_with_goal || is_colliding_with_wall
             if is_colliding_with_goal
                 world.reward = world.goal_reward
                 world.done = true
@@ -146,8 +146,10 @@ function RCW.act!(world::SingleRoom, action)
                 world.reward = zero(world.reward)
                 world.done = false
             end
-
+        else
             world.player_position_wu = new_player_position_wu
+            world.reward = zero(world.reward)
+            world.done = false
         end
     else
         num_directions = world.num_directions
