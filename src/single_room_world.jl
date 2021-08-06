@@ -17,6 +17,7 @@ mutable struct SingleRoom{T, RNG, R}
     player_direction_au::Int
     player_radius_wu::T
     position_increment_wu::T
+    direction_increment_au::Int
     field_of_view_au::Int
     directions_wu::Array{T, 2}
     ray_stop_position_tu::Array{Int, 2}
@@ -39,6 +40,7 @@ function SingleRoom(;
         player_direction_au = num_directions ÷ 8,
         player_radius_wu = convert(T, 1 / 8), # should be less than 0.5
         position_increment_wu = convert(T, 1 / 8),
+        direction_increment_au = 2,
         rng = Random.GLOBAL_RNG,
         R = Float32,
     )
@@ -74,6 +76,7 @@ function SingleRoom(;
                        player_direction_au,
                        player_radius_wu,
                        position_increment_wu,
+                       direction_increment_au,
                        field_of_view_au,
                        directions_wu,
                        ray_stop_position_tu,
@@ -153,10 +156,11 @@ function RCW.act!(world::SingleRoom, action)
         end
     else
         num_directions = world.num_directions
+        direction_increment_au = world.direction_increment_au
         if action == 3
-            world.player_direction_au = RCW.turn_left(player_direction_au, num_directions)
+            world.player_direction_au = RCW.turn_left(player_direction_au, num_directions, direction_increment_au)
         else
-            world.player_direction_au = RCW.turn_right(player_direction_au, num_directions)
+            world.player_direction_au = RCW.turn_right(player_direction_au, num_directions, direction_increment_au)
         end
 
         is_colliding_with_goal = RCW.is_player_colliding(goal_map, player_position_wu, player_radius_wu)

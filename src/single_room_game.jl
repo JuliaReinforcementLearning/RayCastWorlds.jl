@@ -34,6 +34,7 @@ function SingleRoomGame(;
         player_direction_au = num_directions ÷ 8,
         player_radius_wu = convert(T, 1 / 8),
         position_increment_wu = convert(T, 1 / 8),
+        direction_increment_au = 2,
         rng = Random.GLOBAL_RNG,
         R = Float32,
         pu_per_tu = 32,
@@ -52,6 +53,7 @@ function SingleRoomGame(;
                            player_direction_au = player_direction_au,
                            player_radius_wu = player_radius_wu,
                            position_increment_wu = position_increment_wu,
+                           direction_increment_au = direction_increment_au,
                            rng = rng,
                            R = R,
                           )
