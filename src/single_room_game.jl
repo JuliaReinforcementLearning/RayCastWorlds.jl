@@ -67,10 +67,8 @@ function SingleRoom(;
     RCW.cast_rays!(world)
 
     camera_view = Array{C}(undef, field_of_view_au, field_of_view_au)
-    RCW.update_camera_view!(camera_view, world, floor_color, ceiling_color, wall_dim_1_color, wall_dim_2_color)
 
     top_view = Array{C}(undef, height_tile_map_tu * pu_per_tu, width_tile_map_tu * pu_per_tu)
-    RCW.update_top_view!(top_view, world, tile_map_colors, ray_color, player_color)
 
     env = SingleRoom(world,
                           top_view,
@@ -84,6 +82,8 @@ function SingleRoom(;
                           wall_dim_2_color,
                          )
 
+    RCW.update_camera_view!(env)
+    RCW.update_top_view!(env)
     return env
 end
 
@@ -114,7 +114,14 @@ function draw_tile_map!(top_view, tile_map, colors)
     return nothing
 end
 
-function RCW.update_camera_view!(camera_view, world, floor_color, ceiling_color, wall_dim_1_color, wall_dim_2_color)
+function RCW.update_camera_view!(env::SingleRoom)
+    world = env.world
+    camera_view = env.camera_view
+    floor_color = env.floor_color
+    ceiling_color = env.ceiling_color
+    wall_dim_1_color = env.wall_dim_1_color
+    wall_dim_2_color = env.wall_dim_2_color
+
     tile_map = world.tile_map
     player_direction_au = world.player_direction_au
     player_position_wu = world.player_position_wu
@@ -164,7 +171,12 @@ function RCW.update_camera_view!(camera_view, world, floor_color, ceiling_color,
     return nothing
 end
 
-function RCW.update_top_view!(top_view, world, tile_map_colors, ray_color, player_color)
+function RCW.update_top_view!(env)
+    world = env.world
+    top_view = env.top_view
+    tile_map_colors = env.tile_map_colors
+    ray_color = env.ray_color
+    player_color = env.player_color
     tile_map = world.tile_map
     player_direction_au = world.player_direction_au
     player_position_wu = world.player_position_wu
@@ -251,8 +263,8 @@ function RCW.play!(game::SingleRoom)
             elseif key in action_keys
                 RCW.act!(world, findfirst(==(key), action_keys))
                 RCW.cast_rays!(world)
-                RCW.update_top_view!(top_view, world, tile_map_colors, ray_color, player_color)
-                RCW.update_camera_view!(camera_view, world, floor_color, ceiling_color, wall_dim_1_color, wall_dim_2_color)
+                RCW.update_top_view!(game)
+                RCW.update_camera_view!(game)
             end
 
             if current_view == CAMERA_VIEW
