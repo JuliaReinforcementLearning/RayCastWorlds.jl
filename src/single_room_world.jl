@@ -1,4 +1,4 @@
-module SingleRoomWorldModule
+module SingleRoomModule
 
 import Random
 import RayCaster as RC
@@ -10,7 +10,7 @@ const WALL = 1
 const GOAL = 2
 const NUM_ACTIONS = 4
 
-mutable struct SingleRoomWorld{T, RNG, R}
+mutable struct SingleRoom{T, RNG, R}
     tile_map::BitArray{3}
     num_directions::Int
     player_position_wu::SA.SVector{2, T}
@@ -29,7 +29,7 @@ mutable struct SingleRoomWorld{T, RNG, R}
     done::Bool
 end
 
-function SingleRoomWorld(;
+function SingleRoom(;
         T = Float32,
         height_tile_map_tu = 8,
         width_tile_map_tu = 8,
@@ -68,7 +68,7 @@ function SingleRoomWorld(;
     goal_reward = one(R)
     done = false
 
-    world = SingleRoomWorld(tile_map,
+    world = SingleRoom(tile_map,
                        num_directions,
                        player_position_wu,
                        player_direction_au,
@@ -91,7 +91,7 @@ function SingleRoomWorld(;
     return world
 end
 
-function RCW.reset!(world::SingleRoomWorld{T}) where {T}
+function RCW.reset!(world::SingleRoom{T}) where {T}
     tile_map = world.tile_map
     rng = world.rng
     player_radius_wu = world.player_radius_wu
@@ -114,7 +114,7 @@ function RCW.reset!(world::SingleRoomWorld{T}) where {T}
     return nothing
 end
 
-function RCW.act!(world::SingleRoomWorld, action)
+function RCW.act!(world::SingleRoom, action)
     @assert action in Base.OneTo(4) "Invalid action: $(action)"
 
     tile_map = world.tile_map
@@ -170,7 +170,7 @@ function RCW.act!(world::SingleRoomWorld, action)
     return nothing
 end
 
-function RCW.cast_rays!(world::SingleRoomWorld)
+function RCW.cast_rays!(world::SingleRoom)
     tile_map = world.tile_map
     player_direction_au = world.player_direction_au
     player_position_wu = world.player_position_wu

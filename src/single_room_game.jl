@@ -1,21 +1,21 @@
-module SingleRoomModule
+module SingleRoomGameModule
 
 import MiniFB as MFB
 import ..RayCastWorlds as RCW
 import Random
 import SimpleDraw as SD
-import ..SingleRoomWorldModule as SRWM
+import ..SingleRoomModule as SRM
 import StaticArrays as SA
 
 const NUM_VIEWS = 2
 const CAMERA_VIEW = 1
 const TOP_VIEW = 2
 
-struct SingleRoom{T, C}
-    world::SRWM.SingleRoomWorld{T}
+struct SingleRoomGame{T, C}
+    world::SRM.SingleRoom{T}
     top_view::Array{C, 2}
     camera_view::Array{C, 2}
-    tile_map_colors::NTuple{SRWM.NUM_OBJECTS + 1, C}
+    tile_map_colors::NTuple{SRM.NUM_OBJECTS + 1, C}
     ray_color::C
     player_color::C
     floor_color::C
@@ -24,7 +24,7 @@ struct SingleRoom{T, C}
     wall_dim_2_color::C
 end
 
-function SingleRoom(;
+function SingleRoomGame(;
         T = Float32,
         height_tile_map_tu = 8,
         width_tile_map_tu = 8,
@@ -43,7 +43,7 @@ function SingleRoom(;
 
     C = UInt32
 
-    world = SRWM.SingleRoomWorld(T = T,
+    world = SRM.SingleRoom(T = T,
                            height_tile_map_tu = height_tile_map_tu,
                            width_tile_map_tu = width_tile_map_tu,
                            num_directions = num_directions,
@@ -70,7 +70,7 @@ function SingleRoom(;
 
     top_view = Array{C}(undef, height_tile_map_tu * pu_per_tu, width_tile_map_tu * pu_per_tu)
 
-    env = SingleRoom(world,
+    env = SingleRoomGame(world,
                           top_view,
                           camera_view,
                           tile_map_colors,
@@ -114,7 +114,7 @@ function draw_tile_map!(top_view, tile_map, colors)
     return nothing
 end
 
-function RCW.update_camera_view!(env::SingleRoom)
+function RCW.update_camera_view!(env::SingleRoomGame)
     world = env.world
     camera_view = env.camera_view
     floor_color = env.floor_color
@@ -176,7 +176,7 @@ function RCW.update_camera_view!(env::SingleRoom)
     return nothing
 end
 
-function RCW.update_top_view!(env)
+function RCW.update_top_view!(env::SingleRoomGame)
     world = env.world
     top_view = env.top_view
     tile_map_colors = env.tile_map_colors
@@ -221,10 +221,10 @@ function RCW.update_top_view!(env)
     return nothing
 end
 
-RCW.get_action_keys(env::SingleRoom) = (MFB.KB_KEY_W, MFB.KB_KEY_S, MFB.KB_KEY_A, MFB.KB_KEY_D)
-RCW.get_action_names(env::SingleRoom) = (:MOVE_FORWARD, :MOVE_BACKWARD, :TURN_LEFT, :TURN_RIGHT)
+RCW.get_action_keys(env::SingleRoomGame) = (MFB.KB_KEY_W, MFB.KB_KEY_S, MFB.KB_KEY_A, MFB.KB_KEY_D)
+RCW.get_action_names(env::SingleRoomGame) = (:MOVE_FORWARD, :MOVE_BACKWARD, :TURN_LEFT, :TURN_RIGHT)
 
-function RCW.play!(game::SingleRoom)
+function RCW.play!(game::SingleRoomGame)
     world = game.world
     top_view = game.top_view
     camera_view = game.camera_view
