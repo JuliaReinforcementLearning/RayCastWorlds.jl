@@ -1,9 +1,5 @@
 module RayCastWorlds
 
-import Random
-import RayCaster as RC
-import StaticArrays as SA
-
 reset!(world) = error("Method not implemented")
 act!(world) = error("Method not implemented")
 cast_rays!(world) = error("Method not implemented")
@@ -28,6 +24,5 @@ include("units.jl")
 include("collision_detection.jl")
 include("navigation.jl")
 include("single_room.jl")
-include("single_room_game.jl")
 
 end
