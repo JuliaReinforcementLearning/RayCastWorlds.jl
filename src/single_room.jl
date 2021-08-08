@@ -104,19 +104,36 @@ function RCW.reset!(world::SingleRoomWorld{T}) where {T}
     tile_map = world.tile_map
     rng = world.rng
     player_radius_wu = world.player_radius_wu
+    num_directions = world.num_directions
+    _, height_tile_map_tu, width_tile_map_tu = size(tile_map)
+
+    new_goal_position = CartesianIndex(rand(rng, 2 : height_tile_map_tu - 1), rand(rng, 2 : width_tile_map_tu - 1))
+
+    new_player_position_tu = RCW.sample_empty_position(rng, tile_map)
+    new_player_position_wu = SA.SVector(convert(T, new_player_position_tu[1] - 0.5), convert(T, new_player_position_tu[2] - 0.5))
+
+    new_player_direction_au = rand(rng, 0 : num_directions - 1)
+
+    RCW.reset!(world, new_goal_position, new_player_position_wu, new_player_direction_au)
+
+    return nothing
+end
+
+function RCW.reset!(world::SingleRoomWorld{T}, new_goal_position, new_player_position_wu, new_player_direction_au) where {T}
+    tile_map = world.tile_map
+    rng = world.rng
+    player_radius_wu = world.player_radius_wu
     goal_position = world.goal_position
     num_directions = world.num_directions
     _, height_tile_map_tu, width_tile_map_tu = size(tile_map)
 
     tile_map[GOAL, goal_position] = false
 
-    new_goal_position = CartesianIndex(rand(rng, 2 : height_tile_map_tu - 1), rand(rng, 2 : width_tile_map_tu - 1))
     world.goal_position = new_goal_position
     tile_map[GOAL, new_goal_position] = true
 
-    new_player_position_wu = SA.SVector(convert(T, height_tile_map_tu / 2), convert(T, width_tile_map_tu / 2))
     world.player_position_wu = new_player_position_wu
-    world.player_direction_au = 0
+    world.player_direction_au = new_player_direction_au
 
     world.reward = zero(world.reward)
     world.done = false
@@ -466,6 +483,10 @@ function RCW.play!(game::SingleRoom)
             if key == MFB.KB_KEY_Q
                 MFB.mfb_close(window)
                 return nothing
+            elseif key == MFB.KB_KEY_R
+                RCW.reset!(world)
+                RCW.update_top_view!(game)
+                RCW.update_camera_view!(game)
             elseif key == MFB.KB_KEY_V
                 current_view = mod1(current_view + 1, NUM_VIEWS)
                 fill!(frame_buffer, 0x00000000)
