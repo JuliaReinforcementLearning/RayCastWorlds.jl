@@ -150,13 +150,14 @@ function RCW.act!(world::SingleRoomWorld, action)
     player_direction_au = world.player_direction_au
     player_position_wu = world.player_position_wu
     player_radius_wu = world.player_radius_wu
+    num_directions = world.num_directions
     goal_map = @view tile_map[GOAL, :, :]
 
     if action in Base.OneTo(2)
         directions_wu = world.directions_wu
         position_increment_wu = world.position_increment_wu
         field_of_view_au = world.field_of_view_au
-        player_direction_wu = @view directions_wu[:, player_direction_au + (field_of_view_au + 1) ÷ 2]
+        player_direction_wu = @view directions_wu[:, mod(player_direction_au + (field_of_view_au + 1) ÷ 2, num_directions) + 1]
         wall_map = @view tile_map[WALL, :, :]
 
         if action == 1
@@ -182,7 +183,6 @@ function RCW.act!(world::SingleRoomWorld, action)
             world.done = false
         end
     else
-        num_directions = world.num_directions
         direction_increment_au = world.direction_increment_au
         if action == 3
             new_player_direction_au = RCW.turn_left(player_direction_au, num_directions, direction_increment_au)
@@ -314,7 +314,7 @@ end
 
 function draw_tile_map!(top_view, tile_map, colors)
     _, height_tile_map_tu, width_tile_map_tu = size(tile_map)
-    height_top_view_pu = size(top_view, 1)
+    height_top_view_pu, width_top_view_pu = size(top_view)
 
     pu_per_tu = height_top_view_pu ÷ height_tile_map_tu
 
@@ -333,6 +333,11 @@ function draw_tile_map!(top_view, tile_map, colors)
             end
 
             SD.draw!(top_view, shape, color)
+
+            top_view[i_top_left, j_top_left : j_top_left + pu_per_tu - 1] .= 0x00cccccc
+            top_view[i_top_left + pu_per_tu - 1, j_top_left : j_top_left + pu_per_tu - 1] .= 0x00cccccc
+            top_view[i_top_left : i_top_left + pu_per_tu - 1, j_top_left] .= 0x00cccccc
+            top_view[i_top_left : i_top_left + pu_per_tu - 1, j_top_left + pu_per_tu - 1] .= 0x00cccccc
         end
     end
 
