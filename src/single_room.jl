@@ -41,14 +41,14 @@ end
 function SingleRoomWorld(;
         T = Float32,
         height_tile_map_tu = 8,
-        width_tile_map_tu = 8,
+        width_tile_map_tu = 16,
         num_directions = 128, # angles go from 0 to num_directions - 1 (0 corresponding to positive x-axes)
         player_radius_wu = convert(T, 1 / 8), # should be less than 0.5
         position_increment_wu = convert(T, 1 / 8),
         rng = Random.GLOBAL_RNG,
         R = Float32,
-        semi_field_of_view_wu = convert(T, 1),
-        num_rays = 256,
+        semi_field_of_view_wu = convert(T, 2/3),
+        num_rays = 512,
     )
 
     tile_map = falses(NUM_OBJECTS, height_tile_map_tu, width_tile_map_tu)
@@ -248,20 +248,22 @@ struct SingleRoom{T, RNG, R, C}
     ceiling_color::C
     wall_dim_1_color::C
     wall_dim_2_color::C
+    camera_height_tile_wu::T
 end
 
 function SingleRoom(;
         T = Float32,
         height_tile_map_tu = 8,
-        width_tile_map_tu = 8,
+        width_tile_map_tu = 16,
         num_directions = 128,
         player_radius_wu = convert(T, 1 / 8),
         position_increment_wu = convert(T, 1 / 8),
         rng = Random.GLOBAL_RNG,
         R = Float32,
-        semi_field_of_view_wu = convert(T, 1),
-        num_rays = 256,
+        semi_field_of_view_wu = convert(T, 2/3),
+        num_rays = 512,
         pu_per_tu = 32,
+        camera_height_tile_wu = convert(T, 1),
     )
 
     C = UInt32
@@ -302,6 +304,7 @@ function SingleRoom(;
                           ceiling_color,
                           wall_dim_1_color,
                           wall_dim_2_color,
+                          camera_height_tile_wu,
                          )
 
     RCW.update_camera_view!(env)
@@ -349,6 +352,7 @@ function RCW.update_camera_view!(env::SingleRoom)
     ceiling_color = env.ceiling_color
     wall_dim_1_color = env.wall_dim_1_color
     wall_dim_2_color = env.wall_dim_2_color
+    camera_height_tile_wu = env.camera_height_tile_wu
 
     tile_map = world.tile_map
     player_direction_au = world.player_direction_au
@@ -360,6 +364,7 @@ function RCW.update_camera_view!(env::SingleRoom)
     ray_hit_dimension = world.ray_hit_dimension
     ray_distance_wu = world.ray_distance_wu
     directions_wu = world.directions_wu
+    semi_field_of_view_wu = world.semi_field_of_view_wu
 
     _, height_tile_map_tu, width_tile_map_tu = size(tile_map)
     height_camera_view_pu, width_camera_view_pu = size(camera_view)
@@ -370,7 +375,7 @@ function RCW.update_camera_view!(env::SingleRoom)
 
         projected_distance_wu = ray_distance_wu[i] * sum(player_direction_wu .* ray_direction_wu)
 
-        height_line =  0.5 * height_camera_view_pu / projected_distance_wu
+        height_line = camera_height_tile_wu * num_rays / (2 * semi_field_of_view_wu * projected_distance_wu)
         if isfinite(height_line)
             height_line_pu = floor(Int, height_line)
         else
