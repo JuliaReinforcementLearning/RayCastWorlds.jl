@@ -251,6 +251,7 @@ struct SingleRoom{T, RNG, R, C}
     goal_dim_1_color::C
     goal_dim_2_color::C
     camera_height_tile_wu::T
+    height_camera_view_pu::Int
 end
 
 function SingleRoom(;
@@ -266,6 +267,7 @@ function SingleRoom(;
         num_rays = 512,
         pu_per_tu = 32,
         camera_height_tile_wu = convert(T, 1),
+        height_camera_view_pu = 256,
     )
 
     C = UInt32
@@ -294,7 +296,7 @@ function SingleRoom(;
 
     RCW.cast_rays!(world)
 
-    camera_view = Array{C}(undef, num_rays, num_rays)
+    camera_view = Array{C}(undef, height_camera_view_pu, num_rays)
 
     top_view = Array{C}(undef, height_tile_map_tu * pu_per_tu, width_tile_map_tu * pu_per_tu)
 
@@ -311,6 +313,7 @@ function SingleRoom(;
                           goal_dim_1_color,
                           goal_dim_2_color,
                           camera_height_tile_wu,
+                          height_camera_view_pu,
                          )
 
     RCW.update_camera_view!(env)
