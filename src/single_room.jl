@@ -488,7 +488,7 @@ function RCW.play!(game::SingleRoom)
 
     frame_buffer = zeros(UInt32, width_image, height_image)
 
-    window = MFB.mfb_open("Game", width_image, height_image)
+    window = MFB.mfb_open(String(nameof(typeof(game))), width_image, height_image)
 
     action_keys = RCW.get_action_keys(game)
 
@@ -499,9 +499,12 @@ function RCW.play!(game::SingleRoom)
         RCW.copy_image_to_frame_buffer!(frame_buffer, top_view)
     end
 
+    steps_taken = 0
+
     function keyboard_callback(window, key, mod, is_pressed)::Cvoid
         if is_pressed
-            println(key)
+            println("*******************************")
+            @show key
 
             if key == MFB.KB_KEY_Q
                 MFB.mfb_close(window)
@@ -510,6 +513,7 @@ function RCW.play!(game::SingleRoom)
                 RCW.reset!(world)
                 RCW.update_top_view!(game)
                 RCW.update_camera_view!(game)
+                steps_taken = 0
             elseif key == MFB.KB_KEY_V
                 current_view = mod1(current_view + 1, NUM_VIEWS)
                 fill!(frame_buffer, 0x00000000)
@@ -518,6 +522,9 @@ function RCW.play!(game::SingleRoom)
                 RCW.cast_rays!(world)
                 RCW.update_top_view!(game)
                 RCW.update_camera_view!(game)
+                steps_taken += 1
+            else
+                @warn "No keybinding exists for $(key)"
             end
 
             if current_view == CAMERA_VIEW
@@ -525,6 +532,10 @@ function RCW.play!(game::SingleRoom)
             elseif current_view == TOP_VIEW
                 RCW.copy_image_to_frame_buffer!(frame_buffer, top_view)
             end
+
+            @show steps_taken
+            @show world.reward
+            @show world.done
         end
 
         return nothing
