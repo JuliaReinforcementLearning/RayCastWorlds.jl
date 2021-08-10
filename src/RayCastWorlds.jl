@@ -1,5 +1,7 @@
 module RayCastWorlds
 
+import ReinforcementLearningBase as RLBase
+
 reset!(world) = error("Method not implemented")
 act!(world) = error("Method not implemented")
 cast_rays!(world) = error("Method not implemented")
@@ -57,9 +59,12 @@ function sample_empty_position(rng, tile_map)
     return position
 end
 
+abstract type AbstractGame end
+
 include("units.jl")
 include("collision_detection.jl")
 include("navigation.jl")
+include("rlbase.jl")
 include("single_room.jl")
 
 end

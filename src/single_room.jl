@@ -5,6 +5,7 @@ import MiniFB as MFB
 import Random
 import ..RayCastWorlds as RCW
 import RayCaster as RC
+import ReinforcementLearningBase as RLBase
 import SimpleDraw as SD
 import StaticArrays as SA
 
@@ -237,7 +238,7 @@ const NUM_VIEWS = 2
 const CAMERA_VIEW = 1
 const TOP_VIEW = 2
 
-struct SingleRoom{T, RNG, R, C}
+struct SingleRoom{T, RNG, R, C} <: RCW.AbstractGame
     world::SingleRoomWorld{T, RNG, R}
     top_view::Array{C, 2}
     camera_view::Array{C, 2}
@@ -320,6 +321,22 @@ function SingleRoom(;
     RCW.update_top_view!(env)
 
     return env
+end
+
+function RCW.reset!(env::SingleRoom)
+    RCW.reset!(env.world)
+    RCW.update_top_view!(env)
+    RCW.update_camera_view!(env)
+    return nothing
+end
+
+function RCW.act!(env::SingleRoom, action)
+    world = env.world
+    RCW.act!(world, action)
+    RCW.cast_rays!(world)
+    RCW.update_top_view!(env)
+    RCW.update_camera_view!(env)
+    return nothing
 end
 
 function draw_tile_map!(top_view, tile_map, colors)
@@ -510,18 +527,14 @@ function RCW.play!(game::SingleRoom)
                 MFB.mfb_close(window)
                 return nothing
             elseif key == MFB.KB_KEY_R
-                RCW.reset!(world)
-                RCW.update_top_view!(game)
-                RCW.update_camera_view!(game)
+                RCW.reset!(game)
                 steps_taken = 0
             elseif key == MFB.KB_KEY_V
                 current_view = mod1(current_view + 1, NUM_VIEWS)
                 fill!(frame_buffer, 0x00000000)
             elseif key in action_keys
-                RCW.act!(world, findfirst(==(key), action_keys))
-                RCW.cast_rays!(world)
-                RCW.update_top_view!(game)
-                RCW.update_camera_view!(game)
+                action = findfirst(==(key), action_keys)
+                RCW.act!(game, action)
                 steps_taken += 1
             else
                 @warn "No keybinding exists for $(key)"
@@ -553,5 +566,21 @@ function RCW.play!(game::SingleRoom)
 
     return nothing
 end
+
+#####
+##### RLBase API
+#####
+
+RLBase.StateStyle(env::RCW.RLBaseEnv{E}) where {E <: SingleRoom} = RLBase.Observation{Any}()
+RLBase.state_space(env::RCW.RLBaseEnv{E}, ::RLBase.Observation) where {E <: SingleRoom} = nothing
+RLBase.state(env::RCW.RLBaseEnv{E}, ::RLBase.Observation) where {E <: SingleRoom} = env.env.camera_view
+
+RLBase.reset!(env::RCW.RLBaseEnv{E}) where {E <: SingleRoom} = RCW.reset!(env.env)
+
+RLBase.action_space(env::RCW.RLBaseEnv{E}) where {E <: SingleRoom} = Base.OneTo(NUM_ACTIONS)
+(env::RCW.RLBaseEnv{E})(action) where {E <: SingleRoom} = RCW.act!(env.env, action)
+
+RLBase.reward(env::RCW.RLBaseEnv{E}) where {E <: SingleRoom} = env.env.world.reward
+RLBase.is_terminated(env::RCW.RLBaseEnv{E}) where {E <: SingleRoom} = env.env.world.done
 
 end # module
