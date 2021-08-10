@@ -2,7 +2,7 @@
 
 This package provides simple first-person 3D games that can also be used as reinforcement learning environments. It is inspired by [DeepMind Lab](https://github.com/deepmind/lab).
 
-**Note:** This package is unregistered as of this writing and can be installed using the following command in the Julia REPL `pkg` mode (enter `pkg` mode by pressing `]` after starting the REPL):
+**Note:** This package is unregistered as of this writing and can be installed using the following command in the Julia REPL's `pkg` mode (enter `pkg` mode by pressing `]` after starting the REPL):
 
 ```
 add https://github.com/Sid-Bhatia-0/RayCastWorlds.jl
@@ -39,7 +39,6 @@ RCW.act!(env, 3) # turn left
 RCW.act!(env, 4) # turn right
 
 # interactively play the game
-
 # keybindings:
 # `q`: quit
 # `r`: reset
@@ -81,11 +80,11 @@ The core raycasting algorithm is implemented in the [`RayCaster`](https://github
 
 ### Units
 
-There are 4 types of units:
-1. 'wu': Stands for world units. These are usually floating point numbers representing positions in the real world.
-1. 'tu': Stands for tile units. These are integers representing positions on the tile map.
-1. 'pu': Stands for pixel units. These are integers representing positions on the visualization image.
-1. 'au': Stands for angle units. These are integers representing angles from 0 to `num_directions`.
+There are 4 types of units used throughout the code:
+1. `wu`: Stands for world units. These are usually floating point numbers representing positions in the real world.
+1. `tu`: Stands for tile units. These are integers representing positions on the tile map.
+1. `pu`: Stands for pixel units. These are integers representing positions on the visualization image.
+1. `au`: Stands for angle units. These are integers representing angles from 0 to `num_directions`.
 
 The height of the tile map correponds to the x-axis of the coordinate system (often indexed with `i`) and width correponds to the y-axis (often indexed with `j`). This keeps the coordinate system right-handed.
 
