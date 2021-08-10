@@ -2,6 +2,12 @@
 
 This package provides simple first-person 3D games that can also be used as reinforcement learning environments. It is inspired by [DeepMind Lab](https://github.com/deepmind/lab).
 
+**Note:** This package is unregistered as of this writing and can be installed using the following command in the Julia REPL `pkg` mode (enter `pkg` mode by pressing `]` after starting the REPL):
+
+```
+add https://github.com/Sid-Bhatia-0/RayCastWorlds.jl
+```
+
 ## Table of Contents
 
 * [Getting Started](#getting-started)
@@ -89,5 +95,10 @@ The height of the tile map correponds to the x-axis of the coordinate system (of
 
     The objective of the agent is to navigate its way to the goal. When the agent tries to move into the goal tile, it receives a reward of 1 and the environment terminates.
 
-    <img src="">
-    <img src="">
+    Camera view:
+
+    <img src="https://user-images.githubusercontent.com/32610387/128851560-4c713b0b-cf9f-4eed-bf60-439d456ab5f6.png">
+
+    Top view:
+
+    <img src="https://user-images.githubusercontent.com/32610387/128851489-befdb69e-157c-48ea-b6ac-7447e8018d93.png">
