@@ -248,6 +248,8 @@ struct SingleRoom{T, RNG, R, C}
     ceiling_color::C
     wall_dim_1_color::C
     wall_dim_2_color::C
+    goal_dim_1_color::C
+    goal_dim_2_color::C
     camera_height_tile_wu::T
 end
 
@@ -280,13 +282,15 @@ function SingleRoom(;
                            num_rays = num_rays,
                           )
 
-    tile_map_colors = (0x00FFFFFF, 0x00404040, 0x00000000)
+    tile_map_colors = (0x00FFFFFF, 0x00FF0000, 0x00000000)
     ray_color = 0x00808080
     player_color = 0x00c0c0c0
     floor_color = 0x00404040
     ceiling_color = 0x00FFFFFF
     wall_dim_1_color = 0x00808080
     wall_dim_2_color = 0x00c0c0c0
+    goal_dim_1_color = 0x00800000
+    goal_dim_2_color = 0x00c00000
 
     RCW.cast_rays!(world)
 
@@ -304,6 +308,8 @@ function SingleRoom(;
                           ceiling_color,
                           wall_dim_1_color,
                           wall_dim_2_color,
+                          goal_dim_1_color,
+                          goal_dim_2_color,
                           camera_height_tile_wu,
                          )
 
@@ -352,6 +358,8 @@ function RCW.update_camera_view!(env::SingleRoom)
     ceiling_color = env.ceiling_color
     wall_dim_1_color = env.wall_dim_1_color
     wall_dim_2_color = env.wall_dim_2_color
+    goal_dim_1_color = env.goal_dim_1_color
+    goal_dim_2_color = env.goal_dim_2_color
     camera_height_tile_wu = env.camera_height_tile_wu
 
     tile_map = world.tile_map
@@ -383,11 +391,21 @@ function RCW.update_camera_view!(env::SingleRoom)
         end
 
         hit_dimension = ray_hit_dimension[i]
+        ray_stop_position_i_tu = ray_stop_position_tu[1, i]
+        ray_stop_position_j_tu = ray_stop_position_tu[2, i]
 
-        if hit_dimension == 1
-            color = wall_dim_1_color
-        elseif hit_dimension == 2
-            color = wall_dim_2_color
+        if tile_map[WALL, ray_stop_position_i_tu, ray_stop_position_j_tu]
+            if hit_dimension == 1
+                color = wall_dim_1_color
+            else hit_dimension == 2
+                color = wall_dim_2_color
+            end
+        else
+            if hit_dimension == 1
+                color = goal_dim_1_color
+            else hit_dimension == 2
+                color = goal_dim_2_color
+            end
         end
 
         k = width_camera_view_pu - i + 1
