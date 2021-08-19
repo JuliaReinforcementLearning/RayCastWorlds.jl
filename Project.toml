@@ -13,6 +13,7 @@ SimpleDraw = "d1acf6f4-8553-480e-80ae-3c883f0a995a"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
+MiniFB = "0.1"
 julia = "1"
 
 [extras]
