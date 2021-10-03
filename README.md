@@ -2,12 +2,6 @@
 
 This package provides simple first-person 3D games that can also be used as reinforcement learning environments. It is inspired by [DeepMind Lab](https://github.com/deepmind/lab).
 
-**Note:** This package is unregistered as of this writing and can be installed using the following command in the Julia REPL's `pkg` mode (enter `pkg` mode by pressing `]` after starting the REPL):
-
-```
-add https://github.com/Sid-Bhatia-0/RayCastWorlds.jl
-```
-
 ## Table of Contents
 
 * [Getting Started](#getting-started)
