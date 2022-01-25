@@ -350,7 +350,7 @@ function draw_tile_map!(top_view, tile_map, colors)
             i_top_left = (i - 1) * pu_per_tu + 1
             j_top_left = (j - 1) * pu_per_tu + 1
 
-            shape = SD.FilledRectangle(i_top_left, j_top_left, pu_per_tu, pu_per_tu)
+            shape = SD.FilledRectangle(SD.Point(i_top_left, j_top_left), pu_per_tu, pu_per_tu)
 
             object = findfirst(@view tile_map[:, i, j])
             if isnothing(object)
@@ -474,10 +474,10 @@ function RCW.update_top_view!(env::SingleRoom)
     for i in 1:num_rays
         ray_direction_wu = ray_directions_wu[i]
         i_ray_stop_pu, j_ray_stop_pu = RCW.wu_to_pu.(player_position_wu + ray_distance_wu[i] * ray_direction_wu, pu_per_tu)
-        SD.draw!(top_view, SD.Line(i_player_position_pu, j_player_position_pu, i_ray_stop_pu, j_ray_stop_pu), ray_color)
+        SD.draw!(top_view, SD.Line(SD.Point(i_player_position_pu, j_player_position_pu), SD.Point(i_ray_stop_pu, j_ray_stop_pu)), ray_color)
     end
 
-    SD.draw!(top_view, SD.Circle(i_player_position_pu, j_player_position_pu, player_radius_pu), player_color)
+    SD.draw!(top_view, SD.Circle(SD.Point(i_player_position_pu - player_radius_pu, j_player_position_pu - player_radius_pu), 2 * player_radius_pu + 1), player_color)
 
     return nothing
 end
